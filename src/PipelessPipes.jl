@@ -13,7 +13,22 @@ function get_unblocked_parts(x, exprs = Any[])
     exprs
 end
 
-macro _(df, block)
+is_excepted(x) = false
+is_excepted(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@!")
+
+
+insert_first_arg(symbol::Symbol, firstarg) = Expr(:call, symbol, firstarg)
+insert_first_arg(any, firstarg) = error("Can't insert an argument to $any. Needs to be a Symbol or a call expression")
+function insert_first_arg(expr::Expr, firstarg)
+    if expr.head == :call && length(expr.args) > 1
+        Expr(expr.head, expr.args[1], firstarg, expr.args[2:end]...)
+    else
+        error("Can't prepend first arg to expression $expr that isn't a call.")
+    end
+end
+
+
+macro _(firstpart, block)
     if !(block isa Expr && block.head == :block)
         error("Second argument must be a begin / end block")
     end
@@ -21,24 +36,34 @@ macro _(df, block)
     unblocked_parts = get_unblocked_parts(block)
 
     newexprs = []
-    lastsym = df
+    lastsym = firstpart
+
     for part in unblocked_parts
         if part isa LineNumberNode
             push!(newexprs, part)
             continue
         end
-        need_new_variable = false
+        had_underscore = false
+        part_is_excepted = is_excepted(part)
+        if part_is_excepted
+            part = part.args[3] # 1 is macro symbol, 2 is LineNumberNode
+        end
         newexpr = postwalk(part) do expr
             if expr == Symbol("_")
-                need_new_variable = true
-                lastsym
-            elseif expr == Symbol("__")
+                had_underscore = true
                 lastsym
             else
                 expr
             end
         end
-        if need_new_variable
+
+        arg_prepended = false
+        if !(had_underscore || part_is_excepted)
+            newexpr = insert_first_arg(newexpr, lastsym)
+            arg_prepended = true
+        end
+
+        if (had_underscore || arg_prepended) && !part_is_excepted
             newsym = gensym()
             push!(newexprs, Expr(Symbol("="), newsym, newexpr))
             lastsym = newsym
