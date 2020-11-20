@@ -1,6 +1,31 @@
 # PipelessPipes
 
-Takes a start value and a `begin ... end` block of expressions, then pipes the result of each expression into the next one. Either, the position is specified by `_`, or it is implicitly the first argument.
+> For pipes that get out of your way
+
+## Summary
+
+PipelessPipes defines the `@_` macro. It takes a start value and a `begin ... end` block of expressions.
+
+The result of each expression is fed into the next one using one of two rules:
+
+1. **There is at least one underscore in the expression**
+  - every `_` is replaced with the result of the previous expression
+2. **There is no underscore**
+  - the result of the previous expression is used as the first argument in the current expression, as long as it is a function call or a symbol representing a function.
+
+Lines that are prefaced with `@!` are executed, but their result is not fed into the next pipeline step.
+This is very useful to inspect pipeline state during debugging, for example.
+
+## Motivation
+
+- The implicit first argument insertion is useful for many data pipeline scenarios, like `groupby`, `transform` and `combine` in DataFrames.jl
+- The `_` syntax is there to either increase legibility or to use functions like `filter` or `map` which need the previous result as the second argument
+- There is no need to type `|>` over and over
+- Any line can be commented out or in without breaking syntax, there is no problem with dangling `|>` symbols
+- The state of the pipeline can easily be checked with the `@!` macro
+- The `begin ... end` block marks very clearly where the macro is applied and works well with auto-indentation
+
+## Longer Explanation
 
 An example with a DataFrame:
 
