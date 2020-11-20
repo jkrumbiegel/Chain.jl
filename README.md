@@ -67,6 +67,17 @@ result = @_ df begin
 end
 ```
 
+Which is again equivalent to this:
+
+```julia
+result = let
+    var1 = filter(r -> r.weight < 6, df)
+    var2 = groupby(var1, :group)
+    println("There are $(length(var2)) groups after step 2.")
+    var3 = combine(var2, :weight => sum => :total_weight)
+end
+```
+
 Here is a list of equivalent expressions, where `_` is replaced by `prev` and the new variable is `next`.
 In reality, each new variable simply gets a new name via `gensym`, which is guaranteed not to conflict with anything else.
 
