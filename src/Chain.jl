@@ -28,7 +28,7 @@ function insert_first_arg(expr::Expr, firstarg)
 end
 
 
-macro _(firstpart, block)
+macro chain(firstpart, block)
     if !(block isa Expr && block.head == :block)
         error("Second argument must be a begin / end block")
     end
