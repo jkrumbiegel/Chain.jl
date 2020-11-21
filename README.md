@@ -1,10 +1,10 @@
-# PipelessPipes
+# Chain.jl
 
-> For pipes that get out of your way
+Even more convenient than pipes.
 
 ## Summary
 
-PipelessPipes defines the `@_` macro. It takes a start value and a `begin ... end` block of expressions.
+Chain.jl defines the `@chain` macro. It takes a start value and a `begin ... end` block of expressions.
 
 The result of each expression is fed into the next one using one of two rules:
 
@@ -31,11 +31,11 @@ This is very useful to inspect pipeline state during debugging, for example.
 An example with a DataFrame:
 
 ```julia
-using DataFrames, PipelessPipes
+using DataFrames, Chain
 
 df = DataFrame(group = [1, 2, 1, 2], weight = [1, 3, 5, 7])
 
-result = @_ df begin
+result = @chain df begin
     filter(r -> r.weight < 6, _)
     groupby(:group)
     combine(:weight => sum => :total_weight)
@@ -59,7 +59,7 @@ For these expressions there is no implicit first argument spliced in if there is
 If for example, we wanted to know how many groups were created after step 2, we could do this:
 
 ```julia
-result = @_ df begin
+result = @chain df begin
     filter(r -> r.weight < 6, _)
     groupby(:group)
     @! println("There are $(length(_)) groups after step 2.")

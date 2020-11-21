@@ -1,21 +1,21 @@
-using PipelessPipes
+using Chain
 using Test
 
 
 @testset "1" begin
     x = [1, 2, 3]
-    y = @_ x begin
+    y = @chain x begin
         sum
     end
     @test y == sum(x)
 
-    z = @_ x begin
+    z = @chain x begin
         *(3)
         sum
     end
     @test z == sum(x .* 3)
 
-    zz = @_ x begin
+    zz = @chain x begin
         .*(3)
         @! @assert sum(_) / length(_) == 6 # this doesn't change anything
         @! 1 + 1 # this also doesn't do the _ insertion and doesn't change anything
@@ -23,7 +23,7 @@ using Test
     end
     @test zz == z
 
-    zzz = @_ x begin
+    zzz = @chain x begin
         _ .* 3
         sum
     end
@@ -32,7 +32,7 @@ end
 
 @testset "2" begin
     x = 1:4
-    y = @_ x begin
+    y = @chain x begin
         filter(isodd, _)
         map(-, _)
         sum

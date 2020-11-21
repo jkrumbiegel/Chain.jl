@@ -1,6 +1,6 @@
-module PipelessPipes
+module Chain
 
-export @_
+export @chain
 
 function get_unblocked_parts(x, exprs = Any[])
     if x isa Expr && x.head == :block
