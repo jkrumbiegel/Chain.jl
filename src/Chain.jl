@@ -2,17 +2,6 @@ module Chain
 
 export @chain
 
-function get_unblocked_parts(x, exprs = Any[])
-    if x isa Expr && x.head == :block
-        for arg in x.args
-            exprs = get_unblocked_parts(arg, exprs)
-        end
-    else
-        push!(exprs, x)
-    end
-    exprs
-end
-
 is_excepted(x) = false
 is_excepted(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@!")
 
@@ -33,7 +22,7 @@ macro chain(firstpart, block)
         error("Second argument must be a begin / end block")
     end
 
-    unblocked_parts = get_unblocked_parts(block)
+    unblocked_parts = block.args
     isempty(unblocked_parts) && error("No expressions found in chain block.")
 
     newexprs = []

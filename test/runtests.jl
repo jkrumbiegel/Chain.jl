@@ -46,6 +46,18 @@ end
     @test y == 16
 end
 
+@testset "nested begin" begin
+    x = 1:5
+    y = @chain x begin
+        begin
+            z = sum(_) + 3
+            z - 7
+        end
+        sqrt
+    end
+    @test y == sqrt(sum(x) + 3 - 7)
+end
+
 @testset "invalid invocations" begin
     # just one argument
     @test_throws LoadError eval(quote
