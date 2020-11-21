@@ -34,6 +34,7 @@ macro chain(firstpart, block)
     end
 
     unblocked_parts = get_unblocked_parts(block)
+    isempty(unblocked_parts) && error("No expressions found in chain block.")
 
     newexprs = []
     lastsym = firstpart

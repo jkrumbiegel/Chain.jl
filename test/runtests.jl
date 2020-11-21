@@ -4,24 +4,29 @@ using Test
 
 @testset "1" begin
     x = [1, 2, 3]
+    # one symbol
     y = @chain x begin
         sum
     end
     @test y == sum(x)
 
+    # two expressions
     z = @chain x begin
         *(3)
         sum
     end
     @test z == sum(x .* 3)
 
+    # interleaved expressions
+    called = false
     zz = @chain x begin
         .*(3)
         @! @assert sum(_) / length(_) == 6 # this doesn't change anything
-        @! 1 + 1 # this also doesn't do the _ insertion and doesn't change anything
+        @! called = true # this also doesn't do the _ insertion and doesn't change anything
         sum
     end
     @test zz == z
+    @test called
 
     zzz = @chain x begin
         _ .* 3
@@ -39,4 +44,38 @@ end
         _ ^ 2
     end
     @test y == 16
+end
+
+@testset "invalid invocations" begin
+    # just one argument
+    @test_throws LoadError eval(quote
+        @chain [1, 2, 3]
+    end)
+
+    # no begin block
+    @test_throws LoadError eval(quote
+        @chain [1, 2, 3] sum
+    end)
+
+    # empty
+    @test_throws LoadError eval(quote
+        @chain [1, 2, 3] begin
+        end
+    end)
+
+    # let block
+    @test_throws LoadError eval(quote
+        @chain [1, 2, 3] let
+            sum
+        end
+    end)
+
+    # variable defined in chain block doesn't leak out
+    z = @chain [1, 2, 3] begin
+        @! inside_var = 5
+        @! @test inside_var == 5
+        sum(_) + inside_var
+    end
+    @test z == 11
+    @test_throws UndefVarError inside_var
 end
