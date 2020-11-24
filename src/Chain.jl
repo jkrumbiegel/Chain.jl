@@ -32,12 +32,13 @@ function rewrite(expr, replacement)
         end
     end
 
-    prepend_arg = !(had_underscore || expr_is_aside)
-    if prepend_arg
+    # only prepend first argument if there is
+    inserting_first_arg = !had_underscore && !expr_is_aside
+    if inserting_first_arg
         new_expr = insert_first_arg(new_expr, replacement)
     end
 
-    if (had_underscore || prepend_arg) && !expr_is_aside
+    if !expr_is_aside
         next_replacement = gensym()
         new_expr = Expr(Symbol("="), next_replacement, new_expr)
         replacement = next_replacement
