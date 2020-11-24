@@ -19,22 +19,11 @@ end
 function rewrite(expr, replacement)
     aside = is_aside(expr)
     if aside
+        length(expr.args) != 3 && error("Malformed @aside macro")
         expr = expr.args[3] # 1 is macro symbol, 2 is LineNumberNode
-        if length(expr.args) == 4 && expr.args[1] == :@chain
-            println("Found nested chain!")
-            expr = rewrite_chain_block(replacement, expr.args[4])
-        end
     end
 
-    had_underscore = false
-    new_expr = postwalk(expr) do ex
-        if ex == Symbol("_")
-            had_underscore = true
-            replacement
-        else
-            ex
-        end
-    end
+    had_underscore, new_expr = replace_underscores(expr, replacement)
 
     if !aside
         if !had_underscore
@@ -74,16 +63,37 @@ macro chain(firstpart, block)
     rewrite_chain_block(firstpart, block)
 end
 
-## copied from MacroTools in order to avoid dependency
+function replace_underscores(expr::Expr, replacement)
+    found_underscore = false
 
-walk(x, inner, outer) = outer(x)
-walk(x::Expr, inner, outer) = outer(Expr(x.head, map(inner, x.args)...))
+    # if a @chain macrocall is found, only its first arg can be replaced if it's an
+    # underscore, otherwise the macro insides are left untouched
+    if expr.head == :macrocall && expr.args[1] == Symbol("@chain")
+        length(expr.args) != 4 && error("Unexpected macrocall form")
+        expr.args[2] isa LineNumberNode || error("Unexpected macrocall form")
+        arg3 = if expr.args[3] == Symbol("_")
+            found_underscore = true
+            replacement
+        else
+            expr.args[3]
+        end
+        newexpr = Expr(:macrocall, Symbol("@chain"), expr.args[2], arg3, expr.args[4])
+    # for all other expressions, their arguments are checked for underscores recursively
+    # and replaced if any are found
+    else
+        newargs = map(x -> replace_underscores(x, replacement), expr.args)
+        found_underscore = any(first.(newargs))
+        newexpr = Expr(expr.head, last.(newargs)...)
+    end
+    return found_underscore, newexpr
+end
 
-"""
-    postwalk(f, expr)
-Applies `f` to each node in the given expression tree, returning the result.
-`f` sees expressions *after* they have been transformed by the walk.
-"""
-postwalk(f, x) = walk(x, x -> postwalk(f, x), f)
+function replace_underscores(x, replacement)
+    if x == Symbol("_")
+        true, replacement
+    else
+        false, x
+    end
+end
 
 end
