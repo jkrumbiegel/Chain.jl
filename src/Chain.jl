@@ -32,16 +32,12 @@ function rewrite(expr, replacement)
         end
     end
 
-    # only prepend first argument if there is no underscore and it's not an @aside expression
-    inserting_first_arg = !had_underscore && !aside
-    if inserting_first_arg
-        new_expr = insert_first_arg(new_expr, replacement)
-    end
-
     if !aside
-        next_replacement = gensym()
-        new_expr = Expr(Symbol("="), next_replacement, new_expr)
-        replacement = next_replacement
+        if !had_underscore
+            new_expr = insert_first_arg(new_expr, replacement)
+        end
+        replacement = gensym()
+        new_expr = Expr(Symbol("="), replacement, new_expr)
     end
     
     (new_expr, replacement)
