@@ -32,7 +32,7 @@ function rewrite(expr, replacement)
         end
     end
 
-    # only prepend first argument if there is
+    # only prepend first argument if there is no underscore and it's not an @aside expression
     inserting_first_arg = !had_underscore && !expr_is_aside
     if inserting_first_arg
         new_expr = insert_first_arg(new_expr, replacement)
