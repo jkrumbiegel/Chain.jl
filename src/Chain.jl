@@ -16,52 +16,55 @@ function insert_first_arg(expr::Expr, firstarg)
     end
 end
 
+function rewrite(expr, replacement)
+    expr_is_aside = is_aside(expr)
+    if expr_is_aside
+        expr = expr.args[3] # 1 is macro symbol, 2 is LineNumberNode
+    end
+
+    had_underscore = false
+    new_expr = postwalk(expr) do ex
+        if ex == Symbol("_")
+            had_underscore = true
+            replacement
+        else
+            ex
+        end
+    end
+
+    prepend_arg = !(had_underscore || expr_is_aside)
+    if prepend_arg
+        new_expr = insert_first_arg(new_expr, replacement)
+    end
+
+    if (had_underscore || prepend_arg) && !expr_is_aside
+        next_replacement = gensym()
+        new_expr = Expr(Symbol("="), next_replacement, new_expr)
+        replacement = next_replacement
+    end
+    
+    (new_expr, replacement)
+end
+
+rewrite(l::LineNumberNode, replacement) = (l, replacement)
 
 macro chain(firstpart, block)
     if !(block isa Expr && block.head == :block)
         error("Second argument must be a begin / end block")
     end
 
-    unblocked_parts = block.args
-    isempty(unblocked_parts) && error("No expressions found in chain block.")
+    block_expressions = block.args
+    isempty(block_expressions) && error("No expressions found in chain block.")
 
-    newexprs = []
-    lastsym = firstpart
+    rewritten_exprs = []
+    replacement = firstpart
 
-    for part in unblocked_parts
-        if part isa LineNumberNode
-            push!(newexprs, part)
-            continue
-        end
-        had_underscore = false
-        part_is_aside = is_aside(part)
-        if part_is_aside
-            part = part.args[3] # 1 is macro symbol, 2 is LineNumberNode
-        end
-        newexpr = postwalk(part) do expr
-            if expr == Symbol("_")
-                had_underscore = true
-                lastsym
-            else
-                expr
-            end
-        end
-
-        arg_prepended = false
-        if !(had_underscore || part_is_aside)
-            newexpr = insert_first_arg(newexpr, lastsym)
-            arg_prepended = true
-        end
-
-        if (had_underscore || arg_prepended) && !part_is_aside
-            newsym = gensym()
-            push!(newexprs, Expr(Symbol("="), newsym, newexpr))
-            lastsym = newsym
-        else
-            push!(newexprs, newexpr)
-        end
+    for expr in block_expressions
+        rewritten, replacement = rewrite(expr, replacement)
+        push!(rewritten_exprs, rewritten)
     end
-    result = Expr(:let, Expr(:block), Expr(:block, newexprs...))
+
+    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs...))
 
     :($(esc(result)))
 end
