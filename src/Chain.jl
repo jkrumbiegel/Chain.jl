@@ -69,8 +69,8 @@ function replace_underscores(expr::Expr, replacement)
     # if a @chain macrocall is found, only its first arg can be replaced if it's an
     # underscore, otherwise the macro insides are left untouched
     if expr.head == :macrocall && expr.args[1] == Symbol("@chain")
-        length(expr.args) != 4 && error("Unexpected macrocall form")
-        expr.args[2] isa LineNumberNode || error("Unexpected macrocall form")
+        length(expr.args) != 4 && error("Malformed nested @chain macro")
+        expr.args[2] isa LineNumberNode || error("Malformed nested @chain macro")
         arg3 = if expr.args[3] == Symbol("_")
             found_underscore = true
             replacement
