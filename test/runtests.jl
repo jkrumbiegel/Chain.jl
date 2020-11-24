@@ -91,3 +91,19 @@ end
     @test z == 11
     @test_throws UndefVarError inside_var
 end
+
+@testset "nested chains" begin
+    x = 1:5
+    local z
+    y = @chain x begin
+        _ * 2
+        @aside @chain _ begin
+            sum(_)
+            _ * 2
+            @aside z = _
+        end
+        sum
+    end
+    @test y == sum(x * 2)
+    @test z != x * 2
+end
