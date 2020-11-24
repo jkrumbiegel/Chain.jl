@@ -17,8 +17,8 @@ function insert_first_arg(expr::Expr, firstarg)
 end
 
 function rewrite(expr, replacement)
-    expr_is_aside = is_aside(expr)
-    if expr_is_aside
+    aside = is_aside(expr)
+    if aside
         expr = expr.args[3] # 1 is macro symbol, 2 is LineNumberNode
     end
 
@@ -33,12 +33,12 @@ function rewrite(expr, replacement)
     end
 
     # only prepend first argument if there is no underscore and it's not an @aside expression
-    inserting_first_arg = !had_underscore && !expr_is_aside
+    inserting_first_arg = !had_underscore && !aside
     if inserting_first_arg
         new_expr = insert_first_arg(new_expr, replacement)
     end
 
-    if !expr_is_aside
+    if !aside
         next_replacement = gensym()
         new_expr = Expr(Symbol("="), next_replacement, new_expr)
         replacement = next_replacement
