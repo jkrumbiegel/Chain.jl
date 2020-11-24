@@ -21,8 +21,8 @@ using Test
     called = false
     zz = @chain x begin
         .*(3)
-        @! @assert sum(_) / length(_) == 6 # this doesn't change anything
-        @! called = true # this also doesn't do the _ insertion and doesn't change anything
+        @aside @assert sum(_) / length(_) == 6 # this doesn't change anything
+        @aside called = true # this also doesn't do the _ insertion and doesn't change anything
         sum
     end
     @test zz == z
@@ -84,8 +84,8 @@ end
 
     # variable defined in chain block doesn't leak out
     z = @chain [1, 2, 3] begin
-        @! inside_var = 5
-        @! @test inside_var == 5
+        @aside inside_var = 5
+        @aside @test inside_var == 5
         sum(_) + inside_var
     end
     @test z == 11

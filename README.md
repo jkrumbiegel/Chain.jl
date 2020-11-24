@@ -13,7 +13,7 @@ The result of each expression is fed into the next one using one of two rules:
 2. **There is no underscore**
   - the result of the previous expression is used as the first argument in the current expression, as long as it is a function call or a symbol representing a function.
 
-Lines that are prefaced with `@!` are executed, but their result is not fed into the next pipeline step.
+Lines that are prefaced with `@aside` are executed, but their result is not fed into the next pipeline step.
 This is very useful to inspect pipeline state during debugging, for example.
 
 ## Motivation
@@ -22,7 +22,7 @@ This is very useful to inspect pipeline state during debugging, for example.
 - The `_` syntax is there to either increase legibility or to use functions like `filter` or `map` which need the previous result as the second argument
 - There is no need to type `|>` over and over
 - Any line can be commented out or in without breaking syntax, there is no problem with dangling `|>` symbols
-- The state of the pipeline can easily be checked with the `@!` macro
+- The state of the pipeline can easily be checked with the `@aside` macro
 - The `begin ... end` block marks very clearly where the macro is applied and works well with auto-indentation
 - Because everything is just lines with separate expressions and not one huge function call, IDEs can show exactly in which line errors happened
 
@@ -53,7 +53,7 @@ end
 ```
 
 For debugging, it's often useful to look at values in the middle of a pipeline.
-You can use the `@!` macro to mark expressions that should not pass on their result.
+You can use the `@aside` macro to mark expressions that should not pass on their result.
 For these expressions there is no implicit first argument spliced in if there is no `_`, because that would be impractical for most purposes.
 
 If for example, we wanted to know how many groups were created after step 2, we could do this:
@@ -62,7 +62,7 @@ If for example, we wanted to know how many groups were created after step 2, we 
 result = @chain df begin
     filter(r -> r.weight < 6, _)
     groupby(:group)
-    @! println("There are $(length(_)) groups after step 2.")
+    @aside println("There are $(length(_)) groups after step 2.")
     combine(:weight => sum => :total_weight)
 end
 ```
@@ -89,5 +89,5 @@ In reality, each new variable simply gets a new name via `gensym`, which is guar
 | `+(3)` | `next = prev + 3` | Infix notation with _ would look better, but this is also possible |
 | `1 + 2` | `next = prev + 1 + 2` | This might feel weird, but `1 + 2` is a normal call expression |
 | `filter(isodd, _)` | `next = filter(isodd, prev)` | Underscore can go anywhere |
-| `@! println(_)` | `println(prev)` | `println` without affecting the pipeline; using `_` |
-| `@! println("hello")` | `println("hello")` | `println` without affecting the pipeline; no implicit first arg |
+| `@aside println(_)` | `println(prev)` | `println` without affecting the pipeline; using `_` |
+| `@aside println("hello")` | `println("hello")` | `println` without affecting the pipeline; no implicit first arg |

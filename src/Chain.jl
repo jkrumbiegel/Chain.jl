@@ -2,8 +2,8 @@ module Chain
 
 export @chain
 
-is_excepted(x) = false
-is_excepted(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@!")
+is_aside(x) = false
+is_aside(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@aside")
 
 
 insert_first_arg(symbol::Symbol, firstarg) = Expr(:call, symbol, firstarg)
@@ -34,8 +34,8 @@ macro chain(firstpart, block)
             continue
         end
         had_underscore = false
-        part_is_excepted = is_excepted(part)
-        if part_is_excepted
+        part_is_aside = is_aside(part)
+        if part_is_aside
             part = part.args[3] # 1 is macro symbol, 2 is LineNumberNode
         end
         newexpr = postwalk(part) do expr
@@ -48,12 +48,12 @@ macro chain(firstpart, block)
         end
 
         arg_prepended = false
-        if !(had_underscore || part_is_excepted)
+        if !(had_underscore || part_is_aside)
             newexpr = insert_first_arg(newexpr, lastsym)
             arg_prepended = true
         end
 
-        if (had_underscore || arg_prepended) && !part_is_excepted
+        if (had_underscore || arg_prepended) && !part_is_aside
             newsym = gensym()
             push!(newexprs, Expr(Symbol("="), newsym, newexpr))
             lastsym = newsym
