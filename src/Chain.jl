@@ -20,6 +20,10 @@ function rewrite(expr, replacement)
     aside = is_aside(expr)
     if aside
         expr = expr.args[3] # 1 is macro symbol, 2 is LineNumberNode
+        if length(expr.args) == 4 && expr.args[1] == :@chain
+            println("Found nested chain!")
+            expr = rewrite_chain_block(replacement, expr.args[4])
+        end
     end
 
     had_underscore = false
@@ -45,9 +49,9 @@ end
 
 rewrite(l::LineNumberNode, replacement) = (l, replacement)
 
-macro chain(firstpart, block)
+function rewrite_chain_block(firstpart, block)
     if !(block isa Expr && block.head == :block)
-        error("Second argument must be a begin / end block")
+        error("Second argument of @chain must be a begin / end block")
     end
 
     block_expressions = block.args
@@ -64,6 +68,10 @@ macro chain(firstpart, block)
     result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs...))
 
     :($(esc(result)))
+end
+
+macro chain(firstpart, block)
+    rewrite_chain_block(firstpart, block)
 end
 
 ## copied from MacroTools in order to avoid dependency
