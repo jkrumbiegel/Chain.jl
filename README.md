@@ -84,6 +84,24 @@ result = let
 end
 ```
 
+## Nested Chains
+
+The `@chain` macro replaces all underscores in the following block, unless it encounters another `@chain` macrocall.
+In that case, the only underscore that is still replaced by the outer macro is the first argument of the inner `@chain`.
+You can use this, for example, in combination with the `@aside` macro if you need to process a side result further.
+
+```julia
+@chain df begin
+    filter(r -> r.weight < 6, _)
+    @aside @chain _ begin
+            select(:group)
+            CSV.write("filtered_groups.csv", _)
+        end
+    groupby(:group)
+    combine(:weight => sum => :total_weight)
+end
+```
+
 ## Rewriting Rules
 
 Here is a list of equivalent expressions, where `_` is replaced by `prev` and the new variable is `next`.
