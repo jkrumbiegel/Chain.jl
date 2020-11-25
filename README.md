@@ -95,3 +95,4 @@ In reality, each new variable simply gets a new name via `gensym`, which is guar
 | `filter(isodd, _)` | `next = filter(isodd, prev)` | Underscore can go anywhere |
 | `@aside println(_)` | `println(prev)` | `println` without affecting the pipeline; using `_` |
 | `@aside println("hello")` | `println("hello")` | `println` without affecting the pipeline; no implicit first arg |
+| `@. sin` | `next = sin.(prev)` | Alternative to `sin.(_)` |
