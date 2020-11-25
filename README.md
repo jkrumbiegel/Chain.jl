@@ -15,7 +15,7 @@ The result of each expression is fed into the next one using one of two rules:
 1. **There is at least one underscore in the expression**
   - every `_` is replaced with the result of the previous expression
 2. **There is no underscore**
-  - the result of the previous expression is used as the first argument in the current expression, as long as it is a function call or a symbol representing a function.
+  - the result of the previous expression is used as the first argument in the current expression, as long as it is a function call, a macro call or a symbol representing a function.
 
 Lines that are prefaced with `@aside` are executed, but their result is not fed into the next pipeline step.
 This is very useful to inspect pipeline state during debugging, for example.
