@@ -30,7 +30,7 @@ This is very useful to inspect pipeline state during debugging, for example.
 - The `begin ... end` block marks very clearly where the macro is applied and works well with auto-indentation
 - Because everything is just lines with separate expressions and not one huge function call, IDEs can show exactly in which line errors happened
 
-## Longer Explanation
+## Example
 
 An example with a DataFrame:
 
@@ -55,6 +55,8 @@ result = let
     var3 = combine(var2, :weight => sum => :total_weight)
 end
 ```
+
+## The `@aside` macro
 
 For debugging, it's often useful to look at values in the middle of a pipeline.
 You can use the `@aside` macro to mark expressions that should not pass on their result.
@@ -81,6 +83,8 @@ result = let
     var3 = combine(var2, :weight => sum => :total_weight)
 end
 ```
+
+## Rewriting Rules
 
 Here is a list of equivalent expressions, where `_` is replaced by `prev` and the new variable is `next`.
 In reality, each new variable simply gets a new name via `gensym`, which is guaranteed not to conflict with anything else.
