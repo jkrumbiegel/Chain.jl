@@ -2,6 +2,10 @@
 
 Even more convenient than pipes.
 
+## Build Status
+
+![Run tests](https://github.com/jkrumbiegel/Chain.jl/workflows/Run%20tests/badge.svg)
+
 ## Summary
 
 Chain.jl defines the `@chain` macro. It takes a start value and a `begin ... end` block of expressions.
