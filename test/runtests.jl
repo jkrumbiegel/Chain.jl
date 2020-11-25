@@ -107,3 +107,19 @@ end
     @test y == sum(x * 2)
     @test z != x * 2
 end
+
+@testset "broadcast macro symbol" begin
+    x = 1:5
+    y = @chain x begin
+        @. sin
+        sum
+    end
+    @test y == sum(sin.(x))
+
+    ## leave non-symbol invocations intact
+    yy = @chain x begin
+        @. sin(_)
+        sum
+    end
+    @test yy == sum(sin.(x))
+end
