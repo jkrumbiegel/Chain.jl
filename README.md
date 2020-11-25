@@ -118,3 +118,7 @@ In reality, each new variable simply gets a new name via `gensym`, which is guar
 | `@aside println(_)` | `println(prev)` | `println` without affecting the pipeline; using `_` |
 | `@aside println("hello")` | `println("hello")` | `println` without affecting the pipeline; no implicit first arg |
 | `@. sin` | `next = sin.(prev)` | Special-cased alternative to `sin.(_)` |
+| `@somemacro` | `next = @somemacro(prev)` | Macro calls without arguments get an argument spliced in |
+| `@somemacro(x)` | `next = @somemacro(prev, x)` | First argument splicing is the same as with functions |
+| `@somemacro(x, _)` | `next = @somemacro(x, prev)` | Also underscore behavior |
+

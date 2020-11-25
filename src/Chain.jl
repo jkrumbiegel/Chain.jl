@@ -8,9 +8,10 @@ is_aside(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@aside")
 
 insert_first_arg(symbol::Symbol, firstarg) = Expr(:call, symbol, firstarg)
 insert_first_arg(any, firstarg) = error("Can't insert an argument to $any. Needs to be a Symbol or a call expression")
-function insert_first_arg(e::Expr, firstarg)
-    # f(a, b) --> f(firstarg, a, b)
 
+function insert_first_arg(e::Expr, firstarg)
+
+    # f(a, b) --> f(firstarg, a, b)
     if e.head == :call && length(e.args) > 1
         Expr(e.head, e.args[1], firstarg, e.args[2:end]...)
 
@@ -18,6 +19,11 @@ function insert_first_arg(e::Expr, firstarg)
     elseif e.head == :macrocall && length(e.args) == 3 && e.args[1] == Symbol("@__dot__") &&
             e.args[2] isa LineNumberNode && e.args[3] isa Symbol
         Expr(:., e.args[3], Expr(:tuple, firstarg))
+
+    # @macro(a, b) --> @macro(firstarg, a, b)
+    elseif e.head == :macrocall && e.args[1] isa Symbol && e.args[2] isa LineNumberNode
+        Expr(e.head, e.args[1], e.args[2], firstarg, e.args[3:end]...)
+
     else
         error("Can't prepend first arg to expression $e that isn't a call.")
     end

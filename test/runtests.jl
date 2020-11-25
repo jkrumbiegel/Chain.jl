@@ -123,3 +123,32 @@ end
     end
     @test yy == sum(sin.(x))
 end
+
+macro sin(exp)
+    :(sin($(esc(exp))))
+end
+
+macro broadcastminus(exp1, exp2)
+    :($(esc(exp1)) .- $(esc(exp2)))
+end
+
+@testset "splicing into macro calls" begin
+    
+    x = 1
+    y = @chain x begin
+        @sin
+    end
+    @test y == sin(x)
+
+    xx = [1, 2, 3, 4]
+    yy = @chain xx begin
+        @broadcastminus(2.5)
+    end
+    @test yy == xx .- 2.5
+
+    xxx = [1, 2, 3, 4]
+    yyy = @chain xxx begin
+        @broadcastminus(2.5, _)
+    end
+    @test yyy == 2.5 .- xxx 
+end
