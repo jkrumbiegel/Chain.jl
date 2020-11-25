@@ -129,7 +129,7 @@ macro sin(exp)
 end
 
 macro broadcastminus(exp1, exp2)
-    :($(esc(exp1)) .- $(esc(exp2)))
+    :(broadcast(-, $(esc(exp1)), $(esc(exp2))))
 end
 
 @testset "splicing into macro calls" begin
@@ -144,11 +144,11 @@ end
     yy = @chain xx begin
         @broadcastminus(2.5)
     end
-    @test yy == xx .- 2.5
+    @test yy == broadcast(-, xx, 2.5)
 
     xxx = [1, 2, 3, 4]
     yyy = @chain xxx begin
         @broadcastminus(2.5, _)
     end
-    @test yyy == 2.5 .- xxx 
+    @test yyy == broadcast(-, 2.5, xxx)
 end
