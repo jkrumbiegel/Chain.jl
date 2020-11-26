@@ -3,34 +3,40 @@
 Even more convenient than pipes.
 
 <table>
-  <tr><th>Chain.jl</th><th>Base Julia</th><th>Pipe.jl</th></tr>
-  <tr>
-    <td>
-<pre>
+<tr><th>Chain.jl</th><th>Base Julia</th><th>Pipe.jl</th></tr>
+<tr>
+<td>
+      
+```julia
 @chain df begin
-  filter(:weight => <(6), _)
+  filter(:id => >(6), _)
   groupby(:group)
-  combine(:weight => sum)
+  combine(:age => sum)
 end
-</pre>
-    </td>
-    <td>
-<pre>
+```
+
+</td>
+<td>
+
+```julia
 df |>
-  x -> filter(:weight => <(6), x) |>
+  x -> filter(:id => >(6), x) |>
   x -> groupby(x, :group) |>
-  x -> combine(x, :weight => sum)
-</pre>
-    </td>
-    <td>
-<pre>
+  x -> combine(x, :age => sum)
+```
+
+</td>
+<td>
+  
+```julia
 @pipe df |>
-  filter(:weight => <(6), _) |>
+  filter(:id => >(6), _) |>
   groupby(_, :group) |>
-  combine(_, :weight => sum)
-</pre>
-    </td>
-  </tr>
+  combine(_, :age => sum)
+```
+
+</td>
+</tr>
 </table>
 
 ## Build Status
