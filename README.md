@@ -2,6 +2,37 @@
 
 Even more convenient than pipes.
 
+<table>
+  <tr><th>Chain.jl</th><th>Base Julia</th><th>Pipe.jl</th></tr>
+  <tr>
+    <td>
+<pre>
+@chain df begin
+  filter(:weight => <(6), _)
+  groupby(:group)
+  combine(:weight => sum)
+end
+</pre>
+    </td>
+    <td>
+<pre>
+df |>
+  x -> filter(:weight => <(6), x) |>
+  x -> groupby(x, :group) |>
+  x -> combine(x, :weight => sum)
+</pre>
+    </td>
+    <td>
+<pre>
+@pipe df |>
+  filter(:weight => <(6), _) |>
+  groupby(_, :group) |>
+  combine(_, :weight => sum)
+</pre>
+    </td>
+  </tr>
+</table>
+
 ## Build Status
 
 ![Run tests](https://github.com/jkrumbiegel/Chain.jl/workflows/Run%20tests/badge.svg)
