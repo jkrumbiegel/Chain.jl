@@ -30,7 +30,7 @@ df |>
   
 ```julia
 @pipe df |>
-  filter(:id => >(6), _) |>
+  filter(:id => >(6), _)|>
   groupby(_, :group) |>
   combine(_, :age => sum)
 ```
