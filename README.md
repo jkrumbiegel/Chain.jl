@@ -3,7 +3,7 @@
 Even more convenient than pipes.
 
 <table>
-<tr><th>Chain.jl</th><th>Base Julia</th><th>Pipe.jl</th></tr>
+      <tr><th>Chain.jl</th><th>Base Julia</th><th>Lazy.jl</th><th>Pipe.jl</th></tr>
 <tr>
 <td>
       
@@ -23,6 +23,17 @@ df |>
   x -> filter(:id => >(6), x) |>
   x -> groupby(x, :group) |>
   x -> combine(x, :age => sum)
+```
+
+</td>
+<td>
+      
+```julia
+@> df begin
+  x -> filter(:id => >(6), x)
+  groupby(:group)
+  combine(:age => sum)
+end
 ```
 
 </td>
