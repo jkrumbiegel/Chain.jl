@@ -152,3 +152,60 @@ end
     end
     @test yyy == broadcast(-, 2.5, xxx)
 end
+
+@testset "single arg version" begin
+    x = [1, 2, 3]
+
+    xx = @chain begin
+        x
+    end
+    @test xx == x
+
+    # this has a different internal structure (one LineNumberNode missing I think)
+    @test x == @chain begin
+        x
+    end
+
+    @test sum(x) == @chain begin
+        x
+        sum
+    end
+
+    y = @chain begin
+        x
+        sum
+    end
+    @test y == sum(x)
+
+    z = @chain begin
+        x
+        @. sqrt
+        sum(_)
+    end
+    @test z == sum(sqrt.(x))
+
+    @test sum == @chain begin
+        sum
+    end
+end
+
+@testset "invalid single arg versions" begin
+    # empty
+    @test_throws LoadError eval(quote
+        @chain begin
+        end
+    end)
+
+    # rvalue _ errors
+    @test_throws ErrorException eval(quote
+        @chain begin
+            _
+        end
+    end)
+
+    @test_throws ErrorException eval(quote
+        @chain begin
+            sum(_)
+        end
+    end)
+end

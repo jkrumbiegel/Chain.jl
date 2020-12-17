@@ -72,8 +72,93 @@ function rewrite_chain_block(firstpart, block)
     :($(esc(result)))
 end
 
-macro chain(firstpart, block)
-    rewrite_chain_block(firstpart, block)
+"""
+    @chain(initial_value, block::Expr)
+
+Rewrites a block expression to feed the result of each line into the next one.
+The initial value is given by the first argument.
+
+In all lines, underscores are replaced by the previous line's result.
+If there are no underscores and the expression is a symbol, the symbol is rewritten
+to a function call with the previous result as the only argument.
+If there are no underscores and the expression is a function call or a macrocall,
+the call has the previous result prepended as the first argument.
+
+Example:
+
+```
+x = @chain [1, 2, 3] begin
+    filter(!=(2), _)
+    sqrt.(_)
+    sum
+end
+x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
+```
+"""
+macro chain(initial_value, block::Expr)
+    rewrite_chain_block(initial_value, block)
+end
+
+function rewrite_chain_block(block)
+    if !(block isa Expr && block.head == :block)
+        error("Only argument of single-argument @chain must be a begin / end block")
+    end
+
+    block_expressions = block.args
+    isempty(block_expressions) && error("No expressions found in chain block.")
+
+    # assign first line to first gensym variable
+    firstvar = gensym()
+    rewritten_exprs = []
+    replacement = firstvar
+
+    did_first = false
+    for expr in block_expressions
+        # could be and expression first or a LineNumberNode, so a bit convoluted
+        # we just do the firstvar transformation for the first non LineNumberNode
+        # we encounter
+        if !(did_first || expr isa LineNumberNode)
+            expr = Expr(Symbol("="), firstvar, expr)
+            did_first = true
+            push!(rewritten_exprs, expr)
+            continue
+        end
+
+        rewritten, replacement = rewrite(expr, replacement)
+        push!(rewritten_exprs, rewritten)
+    end
+
+    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs...))
+
+    :($(esc(result)))
+end
+
+"""
+    @chain(block::Expr)
+
+Rewrites a block expression to feed the result of each line into the next one.
+The first line serves as the initial value and is not rewritten.
+
+In all other lines, underscores are replaced by the previous line's result.
+If there are no underscores and the expression is a symbol, the symbol is rewritten
+to a function call with the previous result as the only argument.
+If there are no underscores and the expression is a function call or a macrocall,
+the call has the previous result prepended as the first argument.
+
+Example:
+
+```
+x = @chain begin
+    [1, 2, 3]
+    filter(!=(2), _)
+    sqrt.(_)
+    sum
+end
+x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
+```
+"""
+macro chain(block::Expr)
+    rewrite_chain_block(block)
 end
 
 function replace_underscores(expr::Expr, replacement)
