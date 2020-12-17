@@ -93,6 +93,31 @@ result = let
 end
 ```
 
+## Alternative one-argument syntax
+
+If your initial argument name is long and / or the chain's result is assigned to a long
+variable, it can look cleaner if the initial value is moved into the chain.
+Here is such a long expression:
+
+```julia
+a_long_result_variable_name = @chain a_long_input_variable_name begin
+    do_something
+	do_something_else(parameter)
+    do_other_thing(parameter, _)
+end
+```
+
+This is equivalent to the following expression:
+
+```julia
+a_long_result_variable_name = @chain begin
+    a_long_input_variable_name
+    do_something
+	do_something_else(parameter)
+    do_other_thing(parameter, _)
+end
+```
+
 ## The `@aside` macro
 
 For debugging, it's often useful to look at values in the middle of a pipeline.
