@@ -9,6 +9,7 @@ Even more convenient than pipes.
       
 ```julia
 @chain df begin
+  dropmissing
   filter(:id => >(6), _)
   groupby(:group)
   combine(:age => sum)
@@ -20,6 +21,7 @@ end
 
 ```julia
 df |>
+  x -> dropmissing(x) |>
   x -> filter(:id => >(6), x) |>
   x -> groupby(x, :group) |>
   x -> combine(x, :age => sum)
@@ -30,6 +32,7 @@ df |>
   
 ```julia
 @pipe df |>
+  dropmissing(_) |>
   filter(:id => >(6), _)|>
   groupby(_, :group) |>
   combine(_, :age => sum)
@@ -74,9 +77,10 @@ An example with a DataFrame:
 ```julia
 using DataFrames, Chain
 
-df = DataFrame(group = [1, 2, 1, 2], weight = [1, 3, 5, 7])
+df = DataFrame(group = [1, 2, 1, 2, missing], weight = [1, 3, 5, 7, missing])
 
 result = @chain df begin
+    dropmissing
     filter(r -> r.weight < 6, _)
     groupby(:group)
     combine(:weight => sum => :total_weight)
@@ -87,9 +91,10 @@ The pipeless block is equivalent to this:
 
 ```julia
 result = let
-    var1 = filter(r -> r.weight < 6, df)
-    var2 = groupby(var1, :group)
-    var3 = combine(var2, :weight => sum => :total_weight)
+    var1 = dropmissing(df)
+    var2 = filter(r -> r.weight < 6, var1)
+    var3 = groupby(var2, :group)
+    var4 = combine(var3, :weight => sum => :total_weight)
 end
 ```
 
@@ -124,13 +129,14 @@ For debugging, it's often useful to look at values in the middle of a pipeline.
 You can use the `@aside` macro to mark expressions that should not pass on their result.
 For these expressions there is no implicit first argument spliced in if there is no `_`, because that would be impractical for most purposes.
 
-If for example, we wanted to know how many groups were created after step 2, we could do this:
+If for example, we wanted to know how many groups were created after step 3, we could do this:
 
 ```julia
 result = @chain df begin
+    dropmissing
     filter(r -> r.weight < 6, _)
     groupby(:group)
-    @aside println("There are $(length(_)) groups after step 2.")
+    @aside println("There are $(length(_)) groups after step 3.")
     combine(:weight => sum => :total_weight)
 end
 ```
@@ -139,10 +145,11 @@ Which is again equivalent to this:
 
 ```julia
 result = let
-    var1 = filter(r -> r.weight < 6, df)
-    var2 = groupby(var1, :group)
-    println("There are $(length(var2)) groups after step 2.")
-    var3 = combine(var2, :weight => sum => :total_weight)
+    var1 = dropmissing(df)
+    var2 = filter(r -> r.weight < 6, var1)
+    var3 = groupby(var2, :group)
+    println("There are $(length(var3)) groups after step 3.")
+    var4 = combine(var3, :weight => sum => :total_weight)
 end
 ```
 
@@ -154,6 +161,7 @@ You can use this, for example, in combination with the `@aside` macro if you nee
 
 ```julia
 @chain df begin
+    dropmissing
     filter(r -> r.weight < 6, _)
     @aside @chain _ begin
             select(:group)
