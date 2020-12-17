@@ -21,7 +21,7 @@ end
 
 ```julia
 df |>
-  x -> dropmissing(x) |>
+  dropmissing |>
   x -> filter(:id => >(6), x) |>
   x -> groupby(x, :group) |>
   x -> combine(x, :age => sum)
@@ -32,7 +32,7 @@ df |>
   
 ```julia
 @pipe df |>
-  dropmissing(_) |>
+  dropmissing |>
   filter(:id => >(6), _)|>
   groupby(_, :group) |>
   combine(_, :age => sum)
