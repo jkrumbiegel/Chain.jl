@@ -133,7 +133,7 @@ macro broadcastminus(exp1, exp2)
 end
 
 @testset "splicing into macro calls" begin
-    
+
     x = 1
     y = @chain x begin
         @sin
@@ -208,4 +208,16 @@ end
             sum(_)
         end
     end)
+end
+
+@testset "handling keyword argments" begin
+    f(a; kwarg) = (a, kwarg)
+    @test (:a, :kwarg) == @chain begin
+        :a
+        f(kwarg = :kwarg)
+    end
+    @test (:a, :kwarg) == @chain begin
+        :a
+        f(; kwarg = :kwarg)
+    end
 end
