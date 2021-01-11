@@ -69,6 +69,7 @@ This is very useful to inspect pipeline state during debugging, for example.
 - The state of the pipeline can easily be checked with the `@aside` macro
 - The `begin ... end` block marks very clearly where the macro is applied and works well with auto-indentation
 - Because everything is just lines with separate expressions and not one huge function call, IDEs can show exactly in which line errors happened
+- Pipe is a name defined by Base Julia which can lead to conflicts
 
 ## Example
 
