@@ -236,4 +236,20 @@ end
     @test y == sin(x)
 end
 
+# issue 13
+@testset "broadcasting calls" begin
+    
+    xs = [1, 2, 3]
+    ys = @chain xs begin
+        sin.()
+    end
+    @test ys == sin.(xs)
 
+    add(x, y) = x + y
+
+    zs = [4, 5, 6]
+    sums = @chain xs begin
+        add.(zs)
+    end
+    @test sums == add.(xs, zs)
+end

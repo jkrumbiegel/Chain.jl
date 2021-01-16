@@ -20,7 +20,11 @@ function insert_first_arg(e::Expr, firstarg)
         else
             Expr(head, args[1], firstarg, args[2:end]...)
         end
+    # f.(a, b) --> f.(firstarg, a, b)
+    elseif head == :. && length(args) > 1 &&
+        args[1] isa Symbol && args[2] isa Expr && args[2].head == :tuple
 
+        Expr(head, args[1], Expr(args[2].head, firstarg, args[2].args...))
     # @. somesymbol --> somesymbol.(firstarg)
     elseif head == :macrocall && length(args) == 3 && args[1] == Symbol("@__dot__") &&
             args[2] isa LineNumberNode && args[3] isa Symbol
