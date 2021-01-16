@@ -30,7 +30,8 @@ df |>
 </td>
 </tr>
 <tr>
-<th>Pipe.jl</th><th>Lazy.jl</th>
+<th><a href="https://github.com/oxinabox/Pipe.jl">Pipe.jl</a></th>
+<th><a href="https://github.com/MikeInnes/Lazy.jl">Lazy.jl</a></th>
 </tr>
 <tr>
 <td>
