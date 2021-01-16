@@ -199,6 +199,7 @@ In reality, each new variable simply gets a new name via `gensym`, which is guar
 | **Before** | **After** | **Comment** |
 | :-- | :-- | :-- |
 | `sum` | `next = sum(prev)` | Symbol gets expanded into function call |
+| `sum()` | `next = sum(prev)` | First argument is inserted |
 | `sum(_)` | `next = sum(prev)` | Call expression gets `_` replaced |
 | `_ + 3` | `next = prev + 3` | Infix call expressions work the same way as other calls |
 | `+(3)` | `next = prev + 3` | Infix notation with _ would look better, but this is also possible |
@@ -206,7 +207,9 @@ In reality, each new variable simply gets a new name via `gensym`, which is guar
 | `filter(isodd, _)` | `next = filter(isodd, prev)` | Underscore can go anywhere |
 | `@aside println(_)` | `println(prev)` | `println` without affecting the pipeline; using `_` |
 | `@aside println("hello")` | `println("hello")` | `println` without affecting the pipeline; no implicit first arg |
-| `@. sin` | `next = sin.(prev)` | Special-cased alternative to `sin.(_)` |
+| `@. sin` | `next = sin.(prev)` | Special-cased alternative to `sin.()` |
+| `sin.()` | `next = sin.(prev)` | First argument is prepended for broadcast calls as well |
+| `somefunc.(x)` | `next = somefunc.(prev, x)` | First argument is prepended for broadcast calls as well |
 | `@somemacro` | `next = @somemacro(prev)` | Macro calls without arguments get an argument spliced in |
 | `@somemacro(x)` | `next = @somemacro(prev, x)` | First argument splicing is the same as with functions |
 | `@somemacro(x, _)` | `next = @somemacro(x, prev)` | Also underscore behavior |
