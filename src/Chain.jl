@@ -14,7 +14,7 @@ function insert_first_arg(e::Expr, firstarg)
     args = e.args
 
     # f(a, b) --> f(firstarg, a, b)
-    if head == :call && length(args) > 1
+    if head == :call && length(args) > 0
         if length(args) ≥ 2 && Meta.isexpr(args[2], :parameters)
             Expr(head, args[1:2]..., firstarg, args[3:end]...)
         else

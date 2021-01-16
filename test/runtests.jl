@@ -140,6 +140,11 @@ end
     end
     @test y == sin(x)
 
+    y = @chain x begin
+        @sin()
+    end
+    @test y == sin(x)
+
     xx = [1, 2, 3, 4]
     yy = @chain xx begin
         @broadcastminus(2.5)
@@ -221,3 +226,14 @@ end
         f(; kwarg = :kwarg)
     end
 end
+
+# issue 13
+@testset "no argument call" begin
+    x = 1
+    y = @chain x begin
+        sin()
+    end
+    @test y == sin(x)
+end
+
+
