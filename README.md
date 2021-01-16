@@ -1,6 +1,6 @@
 # Chain.jl
 
-Even more convenient than pipes.
+A [Julia package](https://julialang.org/packages/) for chaining function calls using a more convenient syntax than Julia's native [piping functionality](https://docs.julialang.org/en/v1/manual/functions/#Function-composition-and-piping).
 
 <table>
 <tr><th>Chain.jl</th><th>Base Julia</th></tr>
@@ -89,6 +89,8 @@ This is very useful to inspect pipeline state during debugging, for example.
 - Because everything is just lines with separate expressions and not one huge function call, IDEs can show exactly in which line errors happened
 - Pipe is a name defined by Base Julia which can lead to conflicts
 
+For more details, see the [pre-announcement post](https://discourse.julialang.org/t/rfc-pipelesspipes-jl-now-chain-jl/50448).
+
 ## Example
 
 An example with a DataFrame:
@@ -119,8 +121,7 @@ end
 
 ## Alternative one-argument syntax
 
-If your initial argument name is long and / or the chain's result is assigned to a long
-variable, it can look cleaner if the initial value is moved into the chain.
+If your initial argument name is long and / or the chain's result is assigned to a long variable, it can look cleaner if the initial value is moved into the chain.
 Here is such a long expression:
 
 ```julia
