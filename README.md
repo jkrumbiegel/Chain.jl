@@ -1,6 +1,6 @@
 # Chain.jl
 
-A [Julia package](https://julialang.org/packages/) for chaining function calls using a more convenient syntax than Julia's native [piping functionality](https://docs.julialang.org/en/v1/manual/functions/#Function-composition-and-piping).
+A [Julia package](https://julialang.org/packages/) for piping a value through a series of transformation expressions using a more convenient syntax than Julia's native [piping functionality](https://docs.julialang.org/en/v1/manual/functions/#Function-composition-and-piping).
 
 <table>
 <tr><th>Chain.jl</th><th>Base Julia</th></tr>
