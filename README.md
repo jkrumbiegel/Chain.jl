@@ -90,8 +90,6 @@ This is very useful to inspect pipeline state during debugging, for example.
 - Because everything is just lines with separate expressions and not one huge function call, IDEs can show exactly in which line errors happened
 - Pipe is a name defined by Base Julia which can lead to conflicts
 
-For more details, see the [pre-announcement post](https://discourse.julialang.org/t/rfc-pipelesspipes-jl-now-chain-jl/50448).
-
 ## Example
 
 An example with a DataFrame:
