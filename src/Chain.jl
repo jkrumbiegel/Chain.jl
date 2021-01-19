@@ -204,4 +204,13 @@ function replace_underscores(x, replacement)
     end
 end
 
+# Aliases
+macro |(block::Expr)
+    rewrite_chain_block(block)
+end
+
+macro |(initial_value, block::Expr)
+    rewrite_chain_block(initial_value, block)
+end
+
 end
