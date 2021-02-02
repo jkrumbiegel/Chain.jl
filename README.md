@@ -1,6 +1,6 @@
 # Chain.jl
 
-Even more convenient than pipes.
+A [Julia package](https://julialang.org/packages/) for piping a value through a series of transformation expressions using a more convenient syntax than Julia's native [piping functionality](https://docs.julialang.org/en/v1/manual/functions/#Function-composition-and-piping).
 
 <table>
 <tr><th>Chain.jl</th><th>Base Julia</th></tr>
@@ -30,7 +30,8 @@ df |>
 </td>
 </tr>
 <tr>
-<th>Pipe.jl</th><th>Lazy.jl</th>
+<th><a href="https://github.com/oxinabox/Pipe.jl">Pipe.jl</a></th>
+<th><a href="https://github.com/MikeInnes/Lazy.jl">Lazy.jl</a></th>
 </tr>
 <tr>
 <td>
@@ -119,8 +120,7 @@ end
 
 ## Alternative one-argument syntax
 
-If your initial argument name is long and / or the chain's result is assigned to a long
-variable, it can look cleaner if the initial value is moved into the chain.
+If your initial argument name is long and / or the chain's result is assigned to a long variable, it can look cleaner if the initial value is moved into the chain.
 Here is such a long expression:
 
 ```julia
