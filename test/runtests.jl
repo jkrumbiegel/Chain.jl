@@ -69,12 +69,6 @@ end
         @chain [1, 2, 3] sum
     end)
 
-    # empty
-    @test_throws LoadError eval(quote
-        @chain [1, 2, 3] begin
-        end
-    end)
-
     # let block
     @test_throws LoadError eval(quote
         @chain [1, 2, 3] let
@@ -252,4 +246,17 @@ end
         add.(zs)
     end
     @test sums == add.(xs, zs)
+end
+
+# issue 16
+@testset "empty chain" begin
+    a = 2
+    x = @chain a + 1 begin
+    end
+    @test x == 3
+
+    y = @chain begin
+        a + 1
+    end
+    @test y == 3
 end

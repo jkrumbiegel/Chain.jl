@@ -67,7 +67,11 @@ function rewrite_chain_block(firstpart, block)
     end
 
     block_expressions = block.args
-    isempty(block_expressions) && error("No expressions found in chain block.")
+
+    # empty chain returns firstpart
+    if all(x -> x isa LineNumberNode, block_expressions)
+        return esc(firstpart)
+    end
 
     rewritten_exprs = []
     replacement = firstpart
