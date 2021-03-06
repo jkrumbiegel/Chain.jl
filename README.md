@@ -61,7 +61,7 @@ end
 </tr>
 </table>
 
-## Build Status
+## Build status
 
 ![Run tests](https://github.com/jkrumbiegel/Chain.jl/workflows/Run%20tests/badge.svg)
 
@@ -88,11 +88,24 @@ This is very useful to inspect pipeline state during debugging, for example.
 - The state of the pipeline can easily be checked with the `@aside` macro
 - The `begin ... end` block marks very clearly where the macro is applied and works well with auto-indentation
 - Because everything is just lines with separate expressions and not one huge function call, IDEs can show exactly in which line errors happened
-- Pipe is a name defined by Base Julia which can lead to conflicts
+- Pipe (as used in [Pipe.jl](https://github.com/oxinabox/Pipe.jl)) is a name defined by Base Julia, which can lead to conflicts
 
-## Example
+## Usage
 
-An example with a DataFrame:
+A simple example that adds one and squares all elements of a range:
+
+```julia
+julia> @chain 1:3 begin
+         _ .+ 1
+         _ .^ 2
+       end
+3-element Array{Int64,1}:
+  4
+  9
+ 16
+```
+
+An example with a [DataFrame](https://github.com/JuliaData/DataFrames.jl):
 
 ```julia
 using DataFrames, Chain
@@ -107,7 +120,7 @@ result = @chain df begin
 end
 ```
 
-The pipeless block is equivalent to this:
+The equivalent native Julia syntax for the above `@chain` block would be:
 
 ```julia
 result = let
@@ -118,7 +131,7 @@ result = let
 end
 ```
 
-## Alternative one-argument syntax
+### Alternative one-argument syntax
 
 If your initial argument name is long and / or the chain's result is assigned to a long variable, it can look cleaner if the initial value is moved into the chain.
 Here is such a long expression:
@@ -142,7 +155,7 @@ a_long_result_variable_name = @chain begin
 end
 ```
 
-## The `@aside` macro
+### The `@aside` macro
 
 For debugging, it's often useful to look at values in the middle of a pipeline.
 You can use the `@aside` macro to mark expressions that should not pass on their result.
@@ -172,7 +185,7 @@ result = let
 end
 ```
 
-## Nested Chains
+## Nested chains
 
 The `@chain` macro replaces all underscores in the following block, unless it encounters another `@chain` macrocall.
 In that case, the only underscore that is still replaced by the outer macro is the first argument of the inner `@chain`.
@@ -191,7 +204,7 @@ You can use this, for example, in combination with the `@aside` macro if you nee
 end
 ```
 
-## Rewriting Rules
+## Rewriting rules
 
 Here is a list of equivalent expressions, where `_` is replaced by `prev` and the new variable is `next`.
 In reality, each new variable simply gets a new name via `gensym`, which is guaranteed not to conflict with anything else.
