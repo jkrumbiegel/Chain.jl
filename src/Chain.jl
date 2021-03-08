@@ -7,35 +7,81 @@ is_aside(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@aside")
 
 
 insert_first_arg(symbol::Symbol, firstarg) = Expr(:call, symbol, firstarg)
-insert_first_arg(any, firstarg) = error("Can't insert an argument to $any. Needs to be a Symbol or a call expression")
+insert_first_arg(any, firstarg) = insertionerror(any)
+
+function insertionerror(expr)
+    error(
+        """Can't insert a first argument into:
+        $expr.
+        
+        First argument insertion works with expressions like these, where [Module.SubModule.] is optional:
+    
+        [Module.SubModule.]func
+        [Module.SubModule.]func(args...)
+        [Module.SubModule.]func(args...; kwargs...)
+        [Module.SubModule.]@macro
+        [Module.SubModule.]@macro(args...)
+        @. [Module.SubModule.]func
+        """
+    )
+end
+
+is_moduled_symbol(x) = false
+function is_moduled_symbol(e::Expr)
+    e.head == :. &&
+        length(e.args) == 2 &&
+        (e.args[1] isa Symbol || is_moduled_symbol(e.args[1])) &&
+        e.args[2] isa QuoteNode &&
+        e.args[2].value isa Symbol
+end
 
 function insert_first_arg(e::Expr, firstarg)
     head = e.head
     args = e.args
 
-    # f(a, b) --> f(firstarg, a, b)
-    if head == :call && length(args) > 0
+    # Module.SubModule.symbol
+    if is_moduled_symbol(e)
+        Expr(:call, e, firstarg)
+
+    # f(args...) --> f(firstarg, args...)
+    elseif head == :call && length(args) > 0
         if length(args) ≥ 2 && Meta.isexpr(args[2], :parameters)
             Expr(head, args[1:2]..., firstarg, args[3:end]...)
         else
             Expr(head, args[1], firstarg, args[2:end]...)
         end
-    # f.(a, b) --> f.(firstarg, a, b)
-    elseif head == :. && length(args) > 1 &&
-        args[1] isa Symbol && args[2] isa Expr && args[2].head == :tuple
+
+    # f.(args...) --> f.(firstarg, args...)
+    elseif head == :. &&
+            length(args) > 1 &&
+            args[1] isa Symbol &&
+            args[2] isa Expr &&
+            args[2].head == :tuple
 
         Expr(head, args[1], Expr(args[2].head, firstarg, args[2].args...))
-    # @. somesymbol --> somesymbol.(firstarg)
-    elseif head == :macrocall && length(args) == 3 && args[1] == Symbol("@__dot__") &&
-            args[2] isa LineNumberNode && args[3] isa Symbol
+
+    # @. [Module.SubModule.]somesymbol --> somesymbol.(firstarg)
+    elseif head == :macrocall &&
+            length(args) == 3 &&
+            args[1] == Symbol("@__dot__") &&
+            args[2] isa LineNumberNode &&
+            (is_moduled_symbol(args[3]) || args[3] isa Symbol)
+
         Expr(:., args[3], Expr(:tuple, firstarg))
 
-    # @macro(a, b) --> @macro(firstarg, a, b)
-    elseif head == :macrocall && args[1] isa Symbol && args[2] isa LineNumberNode
+    # @macro(args...) --> @macro(firstarg, args...)
+    elseif head == :macrocall &&
+        (is_moduled_symbol(args[1]) || args[1] isa Symbol) && 
+        args[2] isa LineNumberNode
+
+        if args[1] == Symbol("@__dot__")
+            error("You can only use the @. macro and automatic first argument insertion if what follows is of the form `[Module.SubModule.]func`")
+        end
+
         Expr(head, args[1], args[2], firstarg, args[3:end]...)
 
     else
-        error("Can't prepend first arg to expression $e that isn't a call.")
+        insertionerror(e)
     end
 end
 
