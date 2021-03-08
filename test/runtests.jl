@@ -260,3 +260,90 @@ end
     end
     @test y == 3
 end
+
+module LocalModule
+    function square(xs)
+        xs .^ 2
+    end
+
+    function power(xs, pow)
+        xs .^ pow
+    end
+
+    add_one(x) = x + 1
+
+    macro sin(exp)
+        :(sin($(esc(exp))))
+    end
+    
+    macro broadcastminus(exp1, exp2)
+        :(broadcast(-, $(esc(exp1)), $(esc(exp2))))
+    end    
+
+    module SubModule
+        function square(xs)
+            xs .^ 2
+        end
+
+        function power(xs, pow)
+            xs .^ pow
+        end
+
+        add_one(x) = x + 1
+
+        macro sin(exp)
+            :(sin($(esc(exp))))
+        end
+        
+        macro broadcastminus(exp1, exp2)
+            :(broadcast(-, $(esc(exp1)), $(esc(exp2))))
+        end        
+    end
+end
+
+@testset "Module qualification" begin
+
+    using .LocalModule
+
+    xs = [1, 2, 3]
+    pow = 4
+    y = @chain xs begin
+        LocalModule.square
+        LocalModule.power(pow)
+        Base.sum
+    end
+    @test y == sum(LocalModule.power(LocalModule.square(xs), pow))
+
+    y2 = @chain xs begin
+        LocalModule.SubModule.square
+        LocalModule.SubModule.power(pow)
+        Base.sum
+    end
+    @test y == sum(LocalModule.SubModule.power(LocalModule.SubModule.square(xs), pow))
+
+    y3 = @chain xs begin
+        @. LocalModule.add_one
+        @. LocalModule.SubModule.add_one
+    end
+    @test y3 == LocalModule.SubModule.add_one.(LocalModule.add_one.(xs))
+
+    y4 = @chain xs begin
+        LocalModule.@broadcastminus(2.5)
+    end
+    @test y4 == LocalModule.@broadcastminus(xs, 2.5)
+
+    y5 = @chain xs begin
+        LocalModule.SubModule.@broadcastminus(2.5)
+    end
+    @test y5 == LocalModule.SubModule.@broadcastminus(xs, 2.5)
+
+    y6 = @chain 3 begin
+        LocalModule.@sin
+    end
+    @test y6 == LocalModule.@sin(3)
+
+    y7 = @chain 3 begin
+        LocalModule.SubModule.@sin
+    end
+    @test y7 == LocalModule.SubModule.@sin(3)
+end
