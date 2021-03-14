@@ -170,10 +170,6 @@ to a function call with the previous result as the only argument.
 If there are no underscores and the argument is a function call or a macrocall,
 the call has the previous result prepended as the first argument.
 
-When using this form of `@chain`, without a `begin` block, you cannot use infix
-operators, binary operators, or anonymous functions. For example, `@chain 1 (_ + 2)`
-will fail.
-
 Example:
 
 ```
