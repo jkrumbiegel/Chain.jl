@@ -152,6 +152,9 @@ x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
 ```
 """
 macro chain(initial_value, block::Expr)
+    if !(block.head == :block)
+        block = Expr(:block, block)
+    end
     rewrite_chain_block(initial_value, block)
 end
 

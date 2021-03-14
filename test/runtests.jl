@@ -69,24 +69,27 @@ end
 
     y = @chain x sum(_) max(0, _) first
     @test y == 6
+
+    y = @chain 1 (t -> t + 1)()
+    @test y == 2
+
+    y = @chain 1 (t -> t + 1)() first max(0, _)
+    @test y == 2
+
+    y = @chain 1 (==(2))
+    @test y == false
+
+    y = @chain 1 (==(2)) first (==(false))
+    @test y == 2
+
+    y = @chain 1 (_ + 1)
+    @test y == 2
+
+    y = @chain 1 (_ + 1) first max(0, _)
+    @test y == 2
 end
 
 @testset "invalid invocations" begin
-    # no begin with infix
-    @test_throws LoadError eval(quote
-        @chain 1 +(1)
-    end)
-
-    # no begin with anonymous function
-    @test_throws LoadError eval(quote
-        @chain 1 (t -> t + 1)()
-    end)
-
-    # no begin with sum
-    @test_throws LoadError eval(quote
-        @chain 1 (_ + 1)
-    end)
-
     # just one argument
     @test_throws LoadError eval(quote
         @chain [1, 2, 3]
