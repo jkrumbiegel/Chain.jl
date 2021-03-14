@@ -80,7 +80,7 @@ end
     @test y == false
 
     y = @chain 1 (==(2)) first (==(false))
-    @test y == 2
+    @test y == true
 
     y = @chain 1 (_ + 1)
     @test y == 2
