@@ -64,7 +64,7 @@ end
     @test y == 6
 
     f() = 1
-    y = @chain f() only
+    y = @chain f() first
     @test y == 1
 
     y = @chain x sum(_) max(0, _) first
