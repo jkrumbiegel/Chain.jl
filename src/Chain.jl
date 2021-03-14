@@ -13,9 +13,9 @@ function insertionerror(expr)
     error(
         """Can't insert a first argument into:
         $expr.
-        
+
         First argument insertion works with expressions like these, where [Module.SubModule.] is optional:
-    
+
         [Module.SubModule.]func
         [Module.SubModule.]func(args...)
         [Module.SubModule.]func(args...; kwargs...)
@@ -71,7 +71,7 @@ function insert_first_arg(e::Expr, firstarg)
 
     # @macro(args...) --> @macro(firstarg, args...)
     elseif head == :macrocall &&
-        (is_moduled_symbol(args[1]) || args[1] isa Symbol) && 
+        (is_moduled_symbol(args[1]) || args[1] isa Symbol) &&
         args[2] isa LineNumberNode
 
         if args[1] == Symbol("@__dot__")
@@ -108,10 +108,6 @@ end
 rewrite(l::LineNumberNode, replacement) = (l, replacement)
 
 function rewrite_chain_block(firstpart, block)
-    if !(block isa Expr && block.head == :block)
-        error("Second argument of @chain must be a begin / end block")
-    end
-
     block_expressions = block.args
 
     # empty chain returns firstpart
@@ -159,11 +155,35 @@ macro chain(initial_value, block::Expr)
     rewrite_chain_block(initial_value, block)
 end
 
-function rewrite_chain_block(block)
-    if !(block isa Expr && block.head == :block)
-        error("Only argument of single-argument @chain must be a begin / end block")
-    end
+"""
+    @chain(initial_value, args...)
 
+Rewrites a series of argments, either expressions or symbols, to feed the result
+of each line into the next one. The initial value is given by the first argument.
+
+In all arguments, underscores are replaced by the argument's result.
+If there are no underscores and the argument is a symbol, the symbol is rewritten
+to a function call with the previous result as the only argument.
+If there are no underscores and the argument is a function call or a macrocall,
+the call has the previous result prepended as the first argument.
+
+When using this form of `@chain`, without a `begin` block, you cannot use infix
+operators, binary operators, or anonymous functions. For example, `@chain 1 (_ + 2)`
+will fail.
+
+Example:
+
+```
+x = @chain [1, 2, 3] filter(!=(2), _) sqrt.(_) sum
+
+x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
+```
+"""
+macro chain(initial_value, args...)
+    rewrite_chain_block(initial_value, Expr(:block, args...))
+end
+
+function rewrite_chain_block(block)
     block_expressions = block.args
     isempty(block_expressions) && error("No expressions found in chain block.")
 

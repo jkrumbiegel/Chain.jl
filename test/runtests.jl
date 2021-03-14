@@ -58,15 +58,38 @@ end
     @test y == sqrt(sum(x) + 3 - 7)
 end
 
+@testset "no begin" begin
+    x = [1, 2, 3]
+    y = @chain x sum
+    @test y == 6
+
+    f() = 1
+    y = @chain f() only
+    @test y == 1
+
+    y = @chain x sum(_) max(0, _) first
+    @test y == 6
+end
+
 @testset "invalid invocations" begin
+    # no begin with infix
+    @test_throws LoadError eval(quote
+        @chain 1 +(1)
+    end)
+
+    # no begin with anonymous function
+    @test_throws LoadError eval(quote
+        @chain 1 (t -> t + 1)()
+    end)
+
+    # no begin with sum
+    @test_throws LoadError eval(quote
+        @chain 1 (_ + 1)
+    end)
+
     # just one argument
     @test_throws LoadError eval(quote
         @chain [1, 2, 3]
-    end)
-
-    # no begin block
-    @test_throws LoadError eval(quote
-        @chain [1, 2, 3] sum
     end)
 
     # let block
@@ -232,7 +255,7 @@ end
 
 # issue 13
 @testset "broadcasting calls" begin
-    
+
     xs = [1, 2, 3]
     ys = @chain xs begin
         sin.()
@@ -275,10 +298,10 @@ module LocalModule
     macro sin(exp)
         :(sin($(esc(exp))))
     end
-    
+
     macro broadcastminus(exp1, exp2)
         :(broadcast(-, $(esc(exp1)), $(esc(exp2))))
-    end    
+    end
 
     module SubModule
         function square(xs)
@@ -294,10 +317,10 @@ module LocalModule
         macro sin(exp)
             :(sin($(esc(exp))))
         end
-        
+
         macro broadcastminus(exp1, exp2)
             :(broadcast(-, $(esc(exp1)), $(esc(exp2))))
-        end        
+        end
     end
 end
 
