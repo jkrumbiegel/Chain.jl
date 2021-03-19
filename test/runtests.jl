@@ -87,6 +87,14 @@ end
 
     y = @chain 1 (_ + 1) first max(0, _)
     @test y == 2
+
+    # the begin block will be different from the normal chain block here
+    # only the last statement matters
+    y = @chain x begin
+        _ .+ 1
+        _ .+ 2
+    end sum
+    @test y == sum(x .+ 2)
 end
 
 @testset "invalid invocations" begin
