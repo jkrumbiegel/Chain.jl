@@ -142,6 +142,15 @@ a_long_result_variable_name = @chain begin
 end
 ```
 
+## One-liner syntax
+
+You can also use `@chain` as a one-liner, where no begin-end block is necessary.
+This works well for short sequences that are still easy to parse visually without being on separate lines.
+
+```julia
+@chain 1:10 filter(isodd, _) sum sqrt
+```
+
 ## The `@aside` macro
 
 For debugging, it's often useful to look at values in the middle of a pipeline.
