@@ -23,7 +23,7 @@ end
 df |>
   dropmissing |>
   x -> groupby(x, :group) |>
-  x -> combine(x, :age => sum, :wage => sum)
+  x -> combine(x, :age => sum, :wage => sum) |>
   x -> lm(@formula(wage_sum ~ age_sum), x)
 ```
 
@@ -40,7 +40,7 @@ df |>
 @pipe df |>
   dropmissing |>
   groupby(_, :group) |>
-  combine(_, :age => sum, :wage => sum)
+  combine(_, :age => sum, :wage => sum) |>
   lm(@formula(wage_sum ~ age_sum), _)
 ```
 
@@ -51,7 +51,7 @@ df |>
 @> df begin
   dropmissing
   groupby(:group)
-  combine(:age => sum)
+  combine(:age => sum, :wage => sum)
   x -> lm(@formula(wage_sum ~ age_sum), x)
 end
 ```
