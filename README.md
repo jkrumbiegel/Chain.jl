@@ -11,8 +11,8 @@ A [Julia package](https://julialang.org/packages/) for piping a value through a 
 @chain df begin
   dropmissing
   groupby(:group)
-  combine(:age => sum, :wage => sum)
-  lm(@formula(wage_sum ~ age_sum), _)
+  combine(:age => sum)
+  CSV.write(file, _)
 end
 ```
 
@@ -23,8 +23,8 @@ end
 df |>
   dropmissing |>
   x -> groupby(x, :group) |>
-  x -> combine(x, :age => sum, :wage => sum) |>
-  x -> lm(@formula(wage_sum ~ age_sum), x)
+  x -> combine(x, :age => sum) |>
+  x -> CSV.write(file, x)
 ```
 
 </td>
@@ -40,8 +40,8 @@ df |>
 @pipe df |>
   dropmissing |>
   groupby(_, :group) |>
-  combine(_, :age => sum, :wage => sum) |>
-  lm(@formula(wage_sum ~ age_sum), _)
+  combine(_, :age => sum) |>
+  CSV.write(file, _)
 ```
 
 </td>
@@ -51,8 +51,8 @@ df |>
 @> df begin
   dropmissing
   groupby(:group)
-  combine(:age => sum, :wage => sum)
-  x -> lm(@formula(wage_sum ~ age_sum), x)
+  combine(:age => sum)
+  x -> CSV.write(file, x)
 end
 ```
 
