@@ -78,7 +78,12 @@ function insert_first_arg(e::Expr, firstarg)
             error("You can only use the @. macro and automatic first argument insertion if what follows is of the form `[Module.SubModule.]func`")
         end
 
-        Expr(head, args[1], args[2], firstarg, args[3:end]...)
+        if length(args) >= 3 && args[3] isa Expr && args[3].head == :parameters
+            # macros can have keyword arguments after ; as well
+            Expr(head, args[1], args[2], args[3], firstarg, args[4:end]...)
+        else
+            Expr(head, args[1], args[2], firstarg, args[3:end]...)
+        end
 
     else
         insertionerror(e)

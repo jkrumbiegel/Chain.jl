@@ -381,3 +381,22 @@ end
     end
     @test y7 == LocalModule.SubModule.@sin(3)
 end
+
+function kwfunc(y; x = 1)
+    y * x
+end
+
+macro kwmac(exprs...)
+    :(kwfunc($(esc.(exprs)...)))
+end
+
+@testset "keyword arguments" begin
+    
+    @test 6 == @chain 2 begin
+        kwfunc(; x = 3)
+    end
+
+    @test 6 == @chain 2 begin
+        @kwmac(; x = 3)
+    end
+end
