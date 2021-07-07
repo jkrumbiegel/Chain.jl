@@ -10,9 +10,9 @@ A [Julia package](https://julialang.org/packages/) for piping a value through a 
 ```julia
 @chain df begin
   dropmissing
-  filter(:id => >(6), _)
   groupby(:group)
   combine(:age => sum)
+  CSV.write(file, _)
 end
 ```
 
@@ -22,9 +22,9 @@ end
 ```julia
 df |>
   dropmissing |>
-  x -> filter(:id => >(6), x) |>
   x -> groupby(x, :group) |>
-  x -> combine(x, :age => sum)
+  x -> combine(x, :age => sum) |>
+  x -> CSV.write(file, x)
 ```
 
 </td>
@@ -39,9 +39,9 @@ df |>
 ```julia
 @pipe df |>
   dropmissing |>
-  filter(:id => >(6), _)|>
   groupby(_, :group) |>
-  combine(_, :age => sum)
+  combine(_, :age => sum) |>
+  CSV.write(file, _)
 ```
 
 </td>
@@ -50,9 +50,9 @@ df |>
 ```julia
 @> df begin
   dropmissing
-  x -> filter(:id => >(6), x)
   groupby(:group)
   combine(:age => sum)
+  x -> CSV.write(file, x)
 end
 ```
 
@@ -101,7 +101,7 @@ df = DataFrame(group = [1, 2, 1, 2, missing], weight = [1, 3, 5, 7, missing])
 
 result = @chain df begin
     dropmissing
-    filter(r -> r.weight < 6, _)
+    subset(:weight => ByRow(<(6)))
     groupby(:group)
     combine(:weight => sum => :total_weight)
 end
@@ -112,7 +112,7 @@ The pipeless block is equivalent to this:
 ```julia
 result = let
     var1 = dropmissing(df)
-    var2 = filter(r -> r.weight < 6, var1)
+    var2 = subset(var1, :weight => ByRow(<(6)))
     var3 = groupby(var2, :group)
     var4 = combine(var3, :weight => sum => :total_weight)
 end
@@ -162,7 +162,7 @@ If for example, we wanted to know how many groups were created after step 3, we 
 ```julia
 result = @chain df begin
     dropmissing
-    filter(r -> r.weight < 6, _)
+    subset(:weight => ByRow(<(6)))
     groupby(:group)
     @aside println("There are $(length(_)) groups after step 3.")
     combine(:weight => sum => :total_weight)
@@ -174,7 +174,7 @@ Which is again equivalent to this:
 ```julia
 result = let
     var1 = dropmissing(df)
-    var2 = filter(r -> r.weight < 6, var1)
+    var2 = subset(var1, :weight => ByRow(<(6)))
     var3 = groupby(var2, :group)
     println("There are $(length(var3)) groups after step 3.")
     var4 = combine(var3, :weight => sum => :total_weight)
@@ -190,7 +190,7 @@ You can use this, for example, in combination with the `@aside` macro if you nee
 ```julia
 @chain df begin
     dropmissing
-    filter(r -> r.weight < 6, _)
+    subset(:weight => ByRow(<(6)))
     @aside @chain _ begin
             select(:group)
             CSV.write("filtered_groups.csv", _)
