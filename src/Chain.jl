@@ -128,7 +128,7 @@ function rewrite_chain_block(firstpart, block)
         push!(rewritten_exprs, rewritten)
     end
 
-    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs...))
+    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
 
     :($(esc(result)))
 end
@@ -212,7 +212,7 @@ function rewrite_chain_block(block)
         push!(rewritten_exprs, rewritten)
     end
 
-    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs...))
+    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
 
     :($(esc(result)))
 end

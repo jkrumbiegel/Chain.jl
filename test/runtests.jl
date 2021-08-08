@@ -400,3 +400,16 @@ end
         @kwmac(; x = 3)
     end
 end
+
+@testset "@aside at the end" begin
+    x = 1
+
+    @test 1 == @chain x begin
+        @aside 1 + 2
+    end
+
+    @test 2 == @chain x begin
+        _ + 1
+        @aside 1 + 2
+    end
+end
