@@ -5,7 +5,7 @@ export @chain
 is_aside(x) = false
 is_aside(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@aside")
 
-function fix_outer_block(x::Expr)
+function fix_outer_block(block::Expr)
     if block.head === :macrocall && block.args[1] === Symbol("@outer")
         block.args[3], true
     else
