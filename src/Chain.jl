@@ -5,6 +5,24 @@ export @chain
 is_aside(x) = false
 is_aside(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@aside")
 
+function fix_outer_block(x::Expr)
+    if block.head === :macrocall && block.args[1] === Symbol("@outer")
+        block.args[3], true
+    else
+        block, false
+    end
+end
+
+
+function fix_outer_block(initial_value, block::Expr)
+    if block.head === :macrocall && block.args[1] === Symbol("@outer")
+        initial_value, block.args[3], true
+    else
+        initial_value, block, false
+    end
+end
+
+
 
 insert_first_arg(symbol::Symbol, firstarg) = Expr(:call, symbol, firstarg)
 insert_first_arg(any, firstarg) = insertionerror(any)
@@ -112,7 +130,7 @@ end
 
 rewrite(l::LineNumberNode, replacement) = (l, replacement)
 
-function rewrite_chain_block(firstpart, block)
+function rewrite_chain_block(firstpart, block; outer = false)
     block_expressions = block.args
 
     # empty chain returns firstpart
@@ -128,8 +146,11 @@ function rewrite_chain_block(firstpart, block)
         push!(rewritten_exprs, rewritten)
     end
 
-    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
-
+    if outer
+        result = Expr(:block, rewritten_exprs..., replacement)
+    else
+        result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
+    end
     :($(esc(result)))
 end
 
@@ -157,10 +178,11 @@ x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
 ```
 """
 macro chain(initial_value, block::Expr)
+    initial_value, block, outer = fix_outer_block(initial_value, block)
     if !(block.head == :block)
         block = Expr(:block, block)
     end
-    rewrite_chain_block(initial_value, block)
+    rewrite_chain_block(initial_value, block; outer = outer)
 end
 
 """
@@ -184,10 +206,11 @@ x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
 ```
 """
 macro chain(initial_value, args...)
+    # no possibility for @outer here
     rewrite_chain_block(initial_value, Expr(:block, args...))
 end
 
-function rewrite_chain_block(block)
+function rewrite_chain_block(block; outer = false)
     block_expressions = block.args
     isempty(block_expressions) && error("No expressions found in chain block.")
 
@@ -212,8 +235,11 @@ function rewrite_chain_block(block)
         push!(rewritten_exprs, rewritten)
     end
 
-    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
-
+    if outer
+        result = Expr(:block, rewritten_exprs..., replacement)
+    else
+        result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
+    end
     :($(esc(result)))
 end
 
@@ -242,7 +268,8 @@ x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
 ```
 """
 macro chain(block::Expr)
-    rewrite_chain_block(block)
+    block, outer = fix_outer_block(block)
+    rewrite_chain_block(block; outer = outer)
 end
 
 function replace_underscores(expr::Expr, replacement)
