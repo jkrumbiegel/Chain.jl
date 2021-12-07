@@ -113,24 +113,8 @@ end
 rewrite(l::LineNumberNode, replacement) = (l, replacement)
 
 function rewrite_chain_block(firstpart, block)
-    block_expressions = block.args
-
-    # empty chain returns firstpart
-    if all(x -> x isa LineNumberNode, block_expressions)
-        return esc(firstpart)
-    end
-
-    rewritten_exprs = []
-    replacement = firstpart
-
-    for expr in block_expressions
-        rewritten, replacement = rewrite(expr, replacement)
-        push!(rewritten_exprs, rewritten)
-    end
-
-    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
-
-    :($(esc(result)))
+    pushfirst!(block.args, firstpart)
+    rewrite_chain_block(block)
 end
 
 """
@@ -191,6 +175,8 @@ function rewrite_chain_block(block)
     block_expressions = block.args
     isempty(block_expressions) && error("No expressions found in chain block.")
 
+    reconvert_docstrings!(block_expressions)
+
     # assign first line to first gensym variable
     firstvar = gensym()
     rewritten_exprs = []
@@ -198,7 +184,7 @@ function rewrite_chain_block(block)
 
     did_first = false
     for expr in block_expressions
-        # could be and expression first or a LineNumberNode, so a bit convoluted
+        # could be an expression first or a LineNumberNode, so a bit convoluted
         # we just do the firstvar transformation for the first non LineNumberNode
         # we encounter
         if !(did_first || expr isa LineNumberNode)
@@ -215,6 +201,26 @@ function rewrite_chain_block(block)
     result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
 
     :($(esc(result)))
+end
+
+# if a line in a chain is a string, it can be parsed as a docstring
+# for whatever is on the following line. because this is unexpected behavior
+# for most users, we convert all docstrings back to separate lines.
+function reconvert_docstrings!(args::Vector)
+    docstring_indices = findall(args) do arg
+        (arg isa Expr
+            && arg.head == :macrocall
+            && length(arg.args) == 4
+            && arg.args[1] == GlobalRef(Core, Symbol("@doc")))
+    end
+    # replace docstrings from back to front because this leaves the earlier indices intact
+    for i in reverse(docstring_indices)
+        e = args[i]
+        str = e.args[3]
+        nextline = e.args[4]
+        splice!(args, i:i, [str, nextline])
+    end
+    args
 end
 
 """

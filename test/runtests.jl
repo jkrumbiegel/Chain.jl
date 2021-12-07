@@ -413,3 +413,26 @@ end
         @aside 1 + 2
     end
 end
+
+@testset "workaround for docstring parsing" begin
+    @test "hi" == @chain " hi " strip
+    @test "hi" == @chain " hi " begin
+        strip
+    end
+    @test "hi" == @chain begin
+        " hi "
+        strip
+    end
+    @test "hi" == @chain begin
+        "hi"
+        " $_ "
+        strip
+    end
+    @test "A" == @chain begin
+        'a'
+        " $_ "
+        strip
+        "$_"
+        uppercase
+    end
+end
