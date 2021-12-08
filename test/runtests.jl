@@ -436,3 +436,9 @@ end
         uppercase
     end
 end
+
+@testset "nested single line chain" begin
+    @test 36 == @chain 1:3 begin
+        @chain _ sum _ ^ 2
+    end
+end
