@@ -110,6 +110,16 @@ function rewrite(expr, replacement)
     (new_expr, replacement)
 end
 
+is_empty_do(x) = (x isa Expr &&
+    x.head == :do &&
+    length(x.args) == 2 &&
+    x.args[2] isa Expr &&
+    x.args[2].head == :-> &&
+    x.args[2].args[1].head == :tuple &&
+    length(x.args[2].args[1].args) == 0)
+
+
+
 rewrite(l::LineNumberNode, replacement) = (l, replacement)
 
 function rewrite_chain_block(firstpart, block)
@@ -141,16 +151,50 @@ x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
 ```
 """
 macro chain(initial_value, block::Expr)
+    if is_empty_do(block)
+        return rewrite_do_block_chain(initial_value, block)
+    end
     if !(block.head == :block)
         block = Expr(:block, block)
     end
     rewrite_chain_block(initial_value, block)
 end
 
+# function handle_empty_do(expr, replacement)
+#     f = expr.args[1].args[1]
+#     var = gensym()
+#     next_replacement = gensym()
+#     block = expr.args[2].args[2]
+#     if !(block isa Expr && block.head == :block)
+#         error("Expected a block in do syntax")
+#     end
+#     newexpr = quote
+#         $next_replacement = $f($replacement) do $var
+#             @chain $var $block
+#         end
+#     end
+#     newexpr, next_replacement
+# end
+
+function rewrite_do_block_chain(initial_value, doblock)
+    f = doblock.args[1].args[1]
+    var = gensym()
+    block = doblock.args[2].args[2]
+    if !(block isa Expr && block.head == :block)
+        error("Expected a block in do syntax")
+    end
+    chain_block_rewritten = rewrite_chain_block(var, block)
+    :(
+        $(esc(f))($(esc(initial_value))) do $(esc(var))
+            $chain_block_rewritten
+        end
+    )
+end
+
 """
     @chain(initial_value, args...)
 
-Rewrites a series of argments, either expressions or symbols, to feed the result
+Rewrites a series of arguments, either expressions or symbols, to feed the result
 of each line into the next one. The initial value is given by the first argument.
 
 In all arguments, underscores are replaced by the argument's result.
