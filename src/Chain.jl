@@ -151,45 +151,13 @@ x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
 ```
 """
 macro chain(initial_value, block::Expr)
-    if is_empty_do(block)
-        return rewrite_do_block_chain(initial_value, block)
-    end
     if !(block.head == :block)
         block = Expr(:block, block)
     end
-    rewrite_chain_block(initial_value, block)
+    esc(rewrite_chain_block(initial_value, block))
 end
 
-# function handle_empty_do(expr, replacement)
-#     f = expr.args[1].args[1]
-#     var = gensym()
-#     next_replacement = gensym()
-#     block = expr.args[2].args[2]
-#     if !(block isa Expr && block.head == :block)
-#         error("Expected a block in do syntax")
-#     end
-#     newexpr = quote
-#         $next_replacement = $f($replacement) do $var
-#             @chain $var $block
-#         end
-#     end
-#     newexpr, next_replacement
-# end
 
-function rewrite_do_block_chain(initial_value, doblock)
-    f = doblock.args[1].args[1]
-    var = gensym()
-    block = doblock.args[2].args[2]
-    if !(block isa Expr && block.head == :block)
-        error("Expected a block in do syntax")
-    end
-    chain_block_rewritten = rewrite_chain_block(var, block)
-    :(
-        $(esc(f))($(esc(initial_value))) do $(esc(var))
-            $chain_block_rewritten
-        end
-    )
-end
 
 """
     @chain(initial_value, args...)
@@ -212,7 +180,7 @@ x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
 ```
 """
 macro chain(initial_value, args...)
-    rewrite_chain_block(initial_value, Expr(:block, args...))
+    esc(rewrite_chain_block(initial_value, Expr(:block, args...)))
 end
 
 function rewrite_chain_block(block)
@@ -243,8 +211,6 @@ function rewrite_chain_block(block)
     end
 
     result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
-
-    :($(esc(result)))
 end
 
 # if a line in a chain is a string, it can be parsed as a docstring
@@ -292,8 +258,37 @@ x == sum(sqrt.(filter(!=(2), [1, 2, 3])))
 ```
 """
 macro chain(block::Expr)
-    rewrite_chain_block(block)
+    if is_empty_do(block)
+        esc(rewrite_do_block_chain(block))
+    else
+        esc(rewrite_chain_block(block))
+    end
 end
+
+function rewrite_do_block_chain(doblock; escape = true)
+    call = doblock.args[1]
+    if !(call isa Expr && call.head == :call)
+        error("Expected a call expression in do syntax")
+    end
+    var = gensym()
+    block = doblock.args[2].args[2]
+    if !(block isa Expr && block.head == :block)
+        error("Expected a block in do syntax")
+    end
+    chain_block_rewritten = rewrite_chain_block(var, block)
+    # dump(chain_block_rewritten)
+
+    Expr(
+        :do,
+        call,
+        Expr(
+            :->,
+            Expr(:tuple, var),
+            chain_block_rewritten
+        )
+    )
+end
+
 
 function replace_underscores(expr::Expr, replacement)
     found_underscore = false
@@ -301,15 +296,27 @@ function replace_underscores(expr::Expr, replacement)
     # if a @chain macrocall is found, only its first arg can be replaced if it's an
     # underscore, otherwise the macro insides are left untouched
     if expr.head == :macrocall && expr.args[1] == Symbol("@chain")
-        length(expr.args) < 3 && error("Malformed nested @chain macro")
-        expr.args[2] isa LineNumberNode || error("Malformed nested @chain macro")
-        arg3 = if expr.args[3] == Symbol("_")
+        expr.args[2] isa LineNumberNode || error("Expected LineNumberNode as arg 2 in nested @chain macro")
+        length(expr.args) < 3 && error("Nested @chain macro has no arguments.")
+        if length(expr.args) == 3 && is_empty_do(expr.args[3])
+            doblock = expr.args[3]
+            call = doblock.args[1]
+            had_underscore, new_call = replace_underscores(call, replacement)
+            if !had_underscore
+                new_call = insert_first_arg(call, replacement)
+            end
+            doblock.args[1] = new_call
+            newexpr = rewrite_do_block_chain(doblock, escape = false)
             found_underscore = true
-            replacement
         else
-            expr.args[3]
+            arg3 = if expr.args[3] == Symbol("_")
+                found_underscore = true
+                replacement
+            else
+                expr.args[3]
+            end
+            newexpr = Expr(:macrocall, Symbol("@chain"), expr.args[2], arg3, expr.args[4:end]...)
         end
-        newexpr = Expr(:macrocall, Symbol("@chain"), expr.args[2], arg3, expr.args[4:end]...)
     # for all other expressions, their arguments are checked for underscores recursively
     # and replaced if any are found
     else

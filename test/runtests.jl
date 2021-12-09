@@ -444,6 +444,12 @@ end
 end
 
 @testset "empty do syntax" begin
+
+    @test [4, 6, 8] == @chain map(1:3) do
+        _ + 1
+        _ * 2
+    end
+
     x = @chain 1:5 begin
             @chain filter() do
                 _ + 1
@@ -467,7 +473,7 @@ end
         end
     end
 
-    @test sum(sqrt.((1:10) .+ 1)) == @chain 1:10 mapreduce(+, _) do
+    @test sum(sqrt.((1:10) .+ 1)) == @chain mapreduce(+, 1:10) do
         _ + 1
         sqrt
     end
