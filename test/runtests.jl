@@ -477,4 +477,16 @@ end
         _ + 1
         sqrt
     end
+
+    @test ["ho", "word"] == @chain begin
+        ["hello", "world"]
+        @chain map() do
+            collect
+            @chain filter() do
+                uppercase
+                _ ∉ ('E', 'L')
+            end
+            String
+        end
+    end
 end
