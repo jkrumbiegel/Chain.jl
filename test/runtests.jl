@@ -442,3 +442,51 @@ end
         @chain _ sum _ ^ 2
     end
 end
+
+@testset "empty do syntax" begin
+
+    @test [4, 6, 8] == @chain map(1:3) do
+        _ + 1
+        _ * 2
+    end
+
+    x = @chain 1:5 begin
+            @chain filter() do
+                _ + 1
+                isodd
+            end
+            @chain map() do
+                _ + 2
+                sqrt
+            end
+        end
+    @test x == sqrt.([2, 4] .+ 2)
+
+    @test [[["ax", "by"]], [["cz"]]] == @chain " ax by \n cz " begin
+        split("\n")
+        @chain map() do
+            split("|")
+            @chain map() do
+                strip
+                split
+            end
+        end
+    end
+
+    @test sum(sqrt.((1:10) .+ 1)) == @chain mapreduce(+, 1:10) do
+        _ + 1
+        sqrt
+    end
+
+    @test ["ho", "word"] == @chain begin
+        ["hello", "world"]
+        @chain map() do
+            collect
+            @chain filter() do
+                uppercase
+                _ ∉ ('E', 'L')
+            end
+            String
+        end
+    end
+end
