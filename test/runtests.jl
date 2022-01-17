@@ -353,7 +353,7 @@ end
         LocalModule.SubModule.power(pow)
         Base.sum
     end
-    @test y == sum(LocalModule.SubModule.power(LocalModule.SubModule.square(xs), pow))
+    @test y2 == sum(LocalModule.SubModule.power(LocalModule.SubModule.square(xs), pow))
 
     y3 = @chain xs begin
         @. LocalModule.add_one
