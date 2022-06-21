@@ -107,14 +107,14 @@ result = @chain df begin
 end
 ```
 
-The pipeless block is equivalent to this:
+The chain block is equivalent to this:
 
 ```julia
-result = let
-    var1 = dropmissing(df)
-    var2 = filter(r -> r.weight < 6, var1)
-    var3 = groupby(var2, :group)
-    var4 = combine(var3, :weight => sum => :total_weight)
+result = begin
+    local var"##1" = dropmissing(df)
+    local var"##2" = filter(r -> r.weight < 6, var"##1")
+    local var"##3" = groupby(var"##2", :group)
+    local var"##4" = combine(var"##3", :weight => sum => :total_weight)
 end
 ```
 
@@ -151,6 +151,21 @@ This works well for short sequences that are still easy to parse visually withou
 @chain 1:10 filter(isodd, _) sum sqrt
 ```
 
+## Variable assignments in the chain
+
+You can prefix any of the expressions that Chain.jl can handle with a variable assignment.
+The previous value will be spliced into the right-hand-side expression and the result will be available afterwards under the chosen variable name.
+
+```julia
+@chain 1:10 begin
+    _ * 3
+    filtered = filter(iseven, _)
+    sum
+end
+
+filtered == [6, 12, 18, 24, 30]
+```
+
 ## The `@aside` macro
 
 For debugging, it's often useful to look at values in the middle of a pipeline.
@@ -172,12 +187,12 @@ end
 Which is again equivalent to this:
 
 ```julia
-result = let
-    var1 = dropmissing(df)
-    var2 = filter(r -> r.weight < 6, var1)
-    var3 = groupby(var2, :group)
-    println("There are $(length(var3)) groups after step 3.")
-    var4 = combine(var3, :weight => sum => :total_weight)
+result = begin
+    local var"##1" = dropmissing(df)
+    local var"##2" = filter(r -> r.weight < 6, var"##1")
+    local var"##3" = groupby(var"##2", :group)
+    println("There are $(length(var"##3")) groups after step 3.")
+    local var"##4" = combine(var"##3", :weight => sum => :total_weight)
 end
 ```
 

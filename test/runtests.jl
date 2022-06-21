@@ -109,15 +109,6 @@ end
             sum
         end
     end)
-
-    # variable defined in chain block doesn't leak out
-    z = @chain [1, 2, 3] begin
-        @aside inside_var = 5
-        @aside @test inside_var == 5
-        sum(_) + inside_var
-    end
-    @test z == 11
-    @test_throws UndefVarError inside_var
 end
 
 @testset "nested chains" begin
@@ -442,3 +433,55 @@ end
         @chain _ sum _ ^ 2
     end
 end
+
+@testset "variable assignment syntax" begin
+    result = @chain 1:10 begin
+        x = filter(iseven, _)
+        y = sum
+        sqrt
+    end
+    @test x == filter(iseven, 1:10)
+    @test y == sum(x)
+    @test result == sqrt(y)
+end
+
+module TestModule
+    using Chain
+end
+
+@testset "no variable leaks" begin
+    
+    allnames() = Set(names(TestModule, all = true))
+    _names = allnames()
+
+    TestModule.eval(quote
+        @chain 1:10 begin
+            sum
+            sqrt
+        end
+    end)
+
+    @test setdiff(allnames(), _names) == Set()
+
+    TestModule.eval(quote
+        @chain begin
+            1:10
+            sum(_)
+            sqrt(_)
+        end
+    end)
+
+    @test setdiff(allnames(), _names) == Set()
+
+    TestModule.eval(quote
+        @chain begin
+            1:10
+            x = sum(_)
+            y = sqrt(_)
+        end
+    end)
+
+    @test setdiff(allnames(), _names) == Set([:x, :y])
+end
+
+
