@@ -6,8 +6,8 @@ is_aside(x) = false
 is_aside(x::Expr) = x.head == :macrocall && x.args[1] == Symbol("@aside")
 
 
-insert_first_arg(symbol::Symbol, firstarg) = Expr(:call, symbol, firstarg)
-insert_first_arg(any, firstarg) = insertionerror(any)
+insert_first_arg(symbol::Symbol, firstarg; assignment = false) = Expr(:call, symbol, firstarg)
+insert_first_arg(any, firstarg; assignment = false) = insertionerror(any)
 
 function insertionerror(expr)
     error(
@@ -35,12 +35,21 @@ function is_moduled_symbol(e::Expr)
         e.args[2].value isa Symbol
 end
 
-function insert_first_arg(e::Expr, firstarg)
+function insert_first_arg(e::Expr, firstarg; assignment = false)
     head = e.head
     args = e.args
 
+    # variable = ...
+    # set assignment = true and rerun with right hand side
+    if !assignment && head == :(=) && length(args) == 2
+        if !(args[1] isa Symbol)
+            error("You can only use assignment syntax with a Symbol as a variable name, not $(args[1]).")
+        end
+        variable = args[1]
+        righthandside = insert_first_arg(args[2], firstarg; assignment = true)
+        :($variable = $righthandside)
     # Module.SubModule.symbol
-    if is_moduled_symbol(e)
+    elseif is_moduled_symbol(e)
         Expr(:call, e, firstarg)
 
     # f(args...) --> f(firstarg, args...)
@@ -188,7 +197,7 @@ function rewrite_chain_block(block)
         # we just do the firstvar transformation for the first non LineNumberNode
         # we encounter
         if !(did_first || expr isa LineNumberNode)
-            expr = Expr(Symbol("="), firstvar, expr)
+            expr = :(local $firstvar = $expr)
             did_first = true
             push!(rewritten_exprs, expr)
             continue

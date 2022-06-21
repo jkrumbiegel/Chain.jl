@@ -440,9 +440,48 @@ end
         y = sum
         sqrt
     end
-    @test result == sqrt(sum(1:50))
+    @test result == sqrt(sum(1:5))
     @test x == first(1:10, 5)
     @test y == sum(first(1:10, 5))
+end
+
+module TestModule
+    using Chain
+end
+
+@testset "no variable leaks" begin
+    
+    allnames() = Set(names(TestModule, all = true))
+    _names = allnames()
+
+    TestModule.eval(quote
+        @chain 1:10 begin
+            sum
+            sqrt
+        end
+    end)
+
+    @test setdiff(allnames(), _names) == Set()
+
+    TestModule.eval(quote
+        @chain begin
+            1:10
+            sum(_)
+            sqrt(_)
+        end
+    end)
+
+    @test setdiff(allnames(), _names) == Set()
+
+    TestModule.eval(quote
+        @chain begin
+            1:10
+            x = sum(_)
+            y = sqrt(_)
+        end
+    end)
+
+    @test setdiff(allnames(), _names) == Set([:x, :y])
 end
 
 
