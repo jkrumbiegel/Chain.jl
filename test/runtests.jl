@@ -442,3 +442,16 @@ end
         @chain _ sum _ ^ 2
     end
 end
+
+@testset "variable assignment syntax" begin
+    result = @chain 1:10 begin
+        x = first(5)
+        y = sum
+        sqrt
+    end
+    @test result == sqrt(sum(1:50))
+    @test x == first(1:10, 5)
+    @test y == sum(first(1:10, 5))
+end
+
+
