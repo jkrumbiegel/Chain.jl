@@ -436,13 +436,13 @@ end
 
 @testset "variable assignment syntax" begin
     result = @chain 1:10 begin
-        x = first(5)
+        x = filter(iseven, _)
         y = sum
         sqrt
     end
-    @test result == sqrt(sum(1:5))
-    @test x == first(1:10, 5)
-    @test y == sum(first(1:10, 5))
+    @test x == filter(iseven, 1:10)
+    @test y == sum(x)
+    @test result == sqrt(y)
 end
 
 module TestModule
