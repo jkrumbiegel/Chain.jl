@@ -104,7 +104,7 @@ function rewrite(expr, replacement)
             new_expr = insert_first_arg(new_expr, replacement)
         end
         replacement = gensym()
-        new_expr = Expr(Symbol("="), replacement, new_expr)
+        new_expr = :(local $replacement = $new_expr)
     end
 
     (new_expr, replacement)
@@ -198,7 +198,7 @@ function rewrite_chain_block(block)
         push!(rewritten_exprs, rewritten)
     end
 
-    result = Expr(:let, Expr(:block), Expr(:block, rewritten_exprs..., replacement))
+    result = Expr(:block, rewritten_exprs..., replacement)
 
     :($(esc(result)))
 end

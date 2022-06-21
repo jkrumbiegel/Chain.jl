@@ -109,15 +109,6 @@ end
             sum
         end
     end)
-
-    # variable defined in chain block doesn't leak out
-    z = @chain [1, 2, 3] begin
-        @aside inside_var = 5
-        @aside @test inside_var == 5
-        sum(_) + inside_var
-    end
-    @test z == 11
-    @test_throws UndefVarError inside_var
 end
 
 @testset "nested chains" begin
