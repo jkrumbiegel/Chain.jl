@@ -56,6 +56,10 @@ function insert_first_arg(e::Expr, firstarg; assignment = false)
     elseif head == :call && length(args) > 0
         if length(args) ≥ 2 && Meta.isexpr(args[2], :parameters)
             Expr(head, args[1:2]..., firstarg, args[3:end]...)
+        elseif args[1] == :splat
+            Expr(:call, args[2], Expr(:..., firstarg))
+        elseif Meta.isexpr(args[1], :call) && args[1].args[1] == :splat
+            Expr(:call, args[1].args[2], Expr(:..., firstarg), args[2:end]...)
         else
             Expr(head, args[1], firstarg, args[2:end]...)
         end
