@@ -283,7 +283,7 @@ function replace_underscores(expr::Expr, replacement)
     # and replaced if any are found
     else
         is_splat = false
-        if expr.args[1] isa Expr && expr.args[1].args[1] == :splat
+        if !isempty(expr.args) && expr.args[1] isa Expr && expr.args[1].args[1] == :splat
             is_splat = true
             replacement = Expr(:..., replacement)
         end
