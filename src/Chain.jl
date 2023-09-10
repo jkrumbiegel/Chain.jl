@@ -282,8 +282,16 @@ function replace_underscores(expr::Expr, replacement)
     # for all other expressions, their arguments are checked for underscores recursively
     # and replaced if any are found
     else
+        is_splat = false
+        if expr.args[1] isa Expr && expr.args[1].args[1] == :splat
+            is_splat = true
+            replacement = Expr(:..., replacement)
+        end
         newargs = map(x -> replace_underscores(x, replacement), expr.args)
         found_underscore = any(first.(newargs))
+        if is_splat && found_underscore
+            newargs[1] = (newargs[1][1], expr.args[1].args[2])
+        end
         newexpr = Expr(expr.head, last.(newargs)...)
     end
     return found_underscore, newexpr
