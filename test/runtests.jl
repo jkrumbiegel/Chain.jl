@@ -215,10 +215,12 @@ end
 
 @testset "invalid single arg versions" begin
     # empty
-    @test_throws LoadError eval(quote
-        @chain begin
-        end
-    end)
+    if VERSION != v"1.0" # weird interaction with test macros
+        @test_throws LoadError eval(quote
+            @chain begin
+            end
+        end)
+    end
 
     # rvalue _ errors
     @test_throws ErrorException eval(quote
