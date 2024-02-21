@@ -1,3 +1,50 @@
+# v0.6
+
+**Breaking**: The rules for transforming chains were simplified.
+Before, there was the two-arg block syntax (this was the only syntax originally):
+
+```julia
+@chain x begin
+    y
+    z
+end
+```
+
+the inline syntax:
+
+```julia
+@chain x y z
+```
+
+and the one-arg block syntax:
+
+```julia
+@chain begin
+    x
+    y
+    z
+end
+```
+All of these are now a single syntax, derived from the rule that any `begin ... end` block in the inline syntax is flattened into its lines.
+This means that you can also use multiple `begin ... end` blocks, and they can be in any position, which can be nice for interactive development of a chain in the REPL.
+
+```julia
+@chain x y begin
+    x
+    y
+    z
+end u v w begin
+    g
+    h
+    i
+end
+```
+
+This is only breaking if you were using a `begin ... end` block in the inline syntax at argument 3 or higher, but you also had to be using an underscore without chaining in that begin block, which is deemed quite unlikely given the intended use of the package.
+All "normal" usage of the `@chain` macro should work as it did before.
+
+As another consequence of the refactor, chains now do not error anymore for a single argument form `@chain x` but simply return `x`.
+
 # v0.5
 
 **Breaking**: The `@chain` macro now creates a `begin` block, not a `let` block.
