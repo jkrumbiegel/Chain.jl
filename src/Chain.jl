@@ -183,7 +183,7 @@ end
 function rewrite_chain_block(block)
     block_expressions = block.args
     isempty(block_expressions) || 
-        (length(block_expressions) == 1 && only(block_expressions) isa LineNumberNode) &&
+        (length(block_expressions) == 1 && block_expressions[] isa LineNumberNode) &&
         error("No expressions found in chain block.")
 
     reconvert_docstrings!(block_expressions)
