@@ -439,6 +439,13 @@ end
         -
         string
     end
+
+    @test_throws LoadError @eval @chain 1:3 reverse begin
+        first
+        _ ^ 2
+    end begin
+        123 # this can't be inserted into, only allowed in a first begin block
+    end
 end
 
 @testset "variable assignment syntax" begin
