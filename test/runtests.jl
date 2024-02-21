@@ -215,7 +215,7 @@ end
 
 @testset "invalid single arg versions" begin
     # empty
-    if VERSION != v"1.0" # weird interaction with test macros
+    if !(VERSION < v"1.1") # weird interaction with test macros in 1.0
         @test_throws LoadError eval(quote
             @chain begin
             end
