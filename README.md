@@ -67,17 +67,114 @@ end
 
 ## Summary
 
-Chain.jl defines the `@chain` macro. It takes a start value and a `begin ... end` block of expressions.
+Chain.jl exports the `@chain` macro.
 
-The result of each expression is fed into the next one using one of two rules:
+This macro rewrites a series of expressions into a chain, where the result of one expression
+is inserted into the next expression following certain rules.
 
-1. **There is at least one underscore in the expression**
-  - every `_` is replaced with the result of the previous expression
-2. **There is no underscore**
-  - the result of the previous expression is used as the first argument in the current expression, as long as it is a function call, a macro call or a symbol representing a function.
+**Rule 1**
 
-Lines that are prefaced with `@aside` are executed, but their result is not fed into the next pipeline step.
-This is very useful to inspect pipeline state during debugging, for example.
+Any `expr` that is a `begin ... end` block is flattened.
+For example, these two pseudocodes are equivalent:
+
+```julia
+@chain a b c d e f
+
+@chain a begin
+    b
+    c
+    d
+end e f
+```
+
+**Rule 2**
+
+Any expression but the first (in the flattened representation) will have the preceding result
+inserted as its first argument, unless at least one underscore `_` is present.
+In that case, all underscores will be replaced with the preceding result.
+
+If the expression is a symbol, the symbol is treated equivalently to a function call.
+
+For example, the following code block
+
+```julia
+@chain begin
+    x
+    f()
+    @g()
+    h
+    @i
+    j(123, _)
+    k(_, 123, _)
+end
+```
+
+is equivalent to
+
+```julia
+begin
+    local temp1 = f(x)
+    local temp2 = @g(temp1)
+    local temp3 = h(temp2)
+    local temp4 = @i(temp3)
+    local temp5 = j(123, temp4)
+    local temp6 = k(temp5, 123, temp5)
+end
+```
+
+**Rule 3**
+
+An expression that begins with `@aside` does not pass its result on to the following expression.
+Instead, the result of the previous expression will be passed on.
+This is meant for inspecting the state of the chain.
+The expression within `@aside` will not get the previous result auto-inserted, you can use
+underscores to reference it.
+
+```julia
+@chain begin
+    [1, 2, 3]
+    filter(isodd, _)
+    @aside @info "There are \$(length(_)) elements after filtering"
+    sum
+end
+```
+
+**Rule 4**
+
+It is allowed to start an expression with a variable assignment.
+In this case, the usual insertion rules apply to the right-hand side of that assignment.
+This can be used to store intermediate results.
+
+```julia
+@chain begin
+    [1, 2, 3]
+    filtered = filter(isodd, _)
+    sum
+end
+
+filtered == [1, 3]
+```
+
+**Rule 5**
+
+The `@.` macro may be used with a symbol to broadcast that function over the preceding result.
+
+```julia
+@chain begin
+    [1, 2, 3]
+    @. sqrt
+end
+```
+
+is equivalent to
+
+```julia
+@chain begin
+    [1, 2, 3]
+    sqrt.(_)
+end
+```
+
 
 ## Motivation
 
@@ -86,7 +183,7 @@ This is very useful to inspect pipeline state during debugging, for example.
 - There is no need to type `|>` over and over
 - Any line can be commented out or in without breaking syntax, there is no problem with dangling `|>` symbols
 - The state of the pipeline can easily be checked with the `@aside` macro
-- The `begin ... end` block marks very clearly where the macro is applied and works well with auto-indentation
+- Flattening of `begin ... end` blocks allows you to split your chain over multiple lines
 - Because everything is just lines with separate expressions and not one huge function call, IDEs can show exactly in which line errors happened
 - Pipe is a name defined by Base Julia which can lead to conflicts
 
