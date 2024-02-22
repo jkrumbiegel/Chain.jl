@@ -90,19 +90,15 @@ end
 
     # the begin block will be different from the normal chain block here
     # only the last statement matters
+    # EDIT: this has changed with the simplification in 0.6, the begin block in the middle is flattened out
     y = @chain x begin
         _ .+ 1
         _ .+ 2
     end sum
-    @test y == sum(x .+ 2)
+    @test y == sum(x .+ 1 .+ 2)
 end
 
 @testset "invalid invocations" begin
-    # just one argument
-    @test_throws LoadError eval(quote
-        @chain [1, 2, 3]
-    end)
-
     # let block
     @test_throws LoadError eval(quote
         @chain [1, 2, 3] let
@@ -433,6 +429,22 @@ end
 @testset "nested single line chain" begin
     @test 36 == @chain 1:3 begin
         @chain _ sum _ ^ 2
+    end
+end
+
+@testset "multiple begin end blocks" begin
+    @test "-9" == @chain 1:3 reverse begin
+        first
+    end _ ^ 2 begin
+        -
+        string
+    end
+
+    @test_throws LoadError @eval @chain 1:3 reverse begin
+        first
+        _ ^ 2
+    end begin
+        123 # this can't be inserted into, only allowed in a first begin block
     end
 end
 
