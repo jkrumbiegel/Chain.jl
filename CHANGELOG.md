@@ -1,3 +1,7 @@
+# v1.0.0
+
+This version signals the stability of the API and contains no changes compared to v0.6.
+
 # v0.6
 
 **Breaking**: The rules for transforming chains were simplified.
